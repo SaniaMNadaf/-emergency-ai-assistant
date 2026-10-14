@@ -8,7 +8,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['favicon.svg', 'icon.svg'],
+      includeAssets: ['favicon.svg', 'icon.svg', 'pwa-192.png', 'pwa-512.png'],
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,json}'],
         runtimeCaching: [
@@ -31,7 +31,8 @@ export default defineConfig({
         background_color: '#ffffff',
         theme_color: '#1e3a8a',
         icons: [
-          { src: '/icon.svg', sizes: '512x512', type: 'image/svg+xml' },
+          { src: '/pwa-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/pwa-512.png', sizes: '512x512', type: 'image/png' },
         ],
       },
     }),

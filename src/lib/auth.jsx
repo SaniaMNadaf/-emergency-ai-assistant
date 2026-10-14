@@ -18,18 +18,23 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (supabase) {
-      supabase.auth.onAuthStateChange(async (_event, session) => {
+      supabase.auth.onAuthStateChange((_event, session) => {
         if (session?.user) {
-          const { data } = await supabase
+          const role = session.user.user_metadata?.role || session.user.app_metadata?.role || 'bystander'
+          const name = session.user.user_metadata?.name || session.user.email
+          setUser({ id: session.user.id, email: session.user.email, role, name })
+          setLoading(false)
+          supabase
             .from('users')
             .select('*')
             .eq('id', session.user.id)
             .single()
-          setUser(data || { id: session.user.id, email: session.user.email })
+            .then(({ data }) => data && setUser(data))
+            .catch(() => {})
         } else {
           setUser(null)
+          setLoading(false)
         }
-        setLoading(false)
       })
     } else {
       const stored = localStorage.getItem('demo_user')

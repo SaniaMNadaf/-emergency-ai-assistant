@@ -1,0 +1,53 @@
+{
+  "id": "bleeding",
+  "title": "Severe Bleeding",
+  "start": "direct_pressure",
+  "nodes": {
+    "direct_pressure": {
+      "type": "instruction",
+      "text": "Put on disposable gloves if available. Apply firm, direct pressure to the wound using a clean cloth, bandage or clothing. Press hard and do not let go.",
+      "next": "call_emergency"
+    },
+    "call_emergency": {
+      "type": "instruction",
+      "text": "Call your local emergency number immediately or tell someone else to call. Do not remove the object if there is one embedded in the wound — press around it.",
+      "next": "bleeding_stopped"
+    },
+    "bleeding_stopped": {
+      "type": "question",
+      "text": "Has the bleeding slowed or stopped after pressing firmly for several minutes?",
+      "yes": "secure_bandage",
+      "no": "more_pressure"
+    },
+    "more_pressure": {
+      "type": "instruction",
+      "text": "Do not lift the cloth — add more layers on top and press harder. If possible, elevate the injured limb above the level of the heart.",
+      "next": "check_conscious"
+    },
+    "check_conscious": {
+      "type": "question",
+      "text": "Is the person conscious and responding to you?",
+      "yes": "keep_pressing",
+      "no": "shock_position"
+    },
+    "keep_pressing": {
+      "type": "instruction",
+      "text": "Keep firm pressure on the wound. Reassure the person, keep them warm and still. Emergency services are on their way.",
+      "next": "bleeding_stopped"
+    },
+    "shock_position": {
+      "type": "instruction",
+      "text": "Lay the person flat. Raise their legs 30 cm (12 inches) if possible and no limb injury prevents it. Keep pressing on the wound. Keep them warm. Do not give anything to eat or drink.",
+      "next": "wait_help"
+    },
+    "secure_bandage": {
+      "type": "instruction",
+      "text": "Secure the dressing firmly with a bandage or tape. Check regularly — if bleeding restarts, press again immediately.",
+      "next": "wait_help"
+    },
+    "wait_help": {
+      "type": "end",
+      "text": "Stay with the person. Monitor their breathing and consciousness. Do not remove the bandage. Wait for emergency services."
+    }
+  }
+}

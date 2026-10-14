@@ -1,0 +1,68 @@
+{
+  "id": "cpr",
+  "title": "CPR (Cardiopulmonary Resuscitation)",
+  "start": "check_response",
+  "nodes": {
+    "check_response": {
+      "type": "instruction",
+      "text": "Tap the person on the shoulder and shout 'Are you OK?' Look, listen and feel for breathing for no more than 10 seconds.",
+      "next": "is_breathing"
+    },
+    "is_breathing": {
+      "type": "question",
+      "text": "Is the person breathing normally?",
+      "yes": "recovery_position",
+      "no": "call_help"
+    },
+    "recovery_position": {
+      "type": "instruction",
+      "text": "The person is breathing. Place them on their side in the recovery position. Keep their airway open and monitor breathing until help arrives.",
+      "next": "end_breathing_ok"
+    },
+    "end_breathing_ok": {
+      "type": "end",
+      "text": "Stay with the person. Call your local emergency number if you have not already done so."
+    },
+    "call_help": {
+      "type": "instruction",
+      "text": "Shout for help. Call your local emergency number now (or ask someone nearby to call). Do not leave the person alone.",
+      "next": "start_compressions"
+    },
+    "start_compressions": {
+      "type": "instruction",
+      "text": "Place the heel of your hand on the centre of the chest. Place your other hand on top and interlock fingers. Keep arms straight. Push down hard and fast — at least 5 cm (2 inches) deep, at a rate of 100–120 per minute. Give 30 compressions.",
+      "next": "trained_rescuer"
+    },
+    "trained_rescuer": {
+      "type": "question",
+      "text": "Are you trained in rescue breaths?",
+      "yes": "rescue_breaths",
+      "no": "compressions_only"
+    },
+    "rescue_breaths": {
+      "type": "instruction",
+      "text": "Tilt the head back gently, lift the chin. Pinch the nose shut. Make a normal breath and seal your lips around the person's mouth. Blow for about 1 second and watch the chest rise. Give 2 rescue breaths. Then return immediately to 30 chest compressions.",
+      "next": "continue_cpr"
+    },
+    "compressions_only": {
+      "type": "instruction",
+      "text": "Give continuous chest compressions without rescue breaths. Push hard and fast — 100–120 per minute. Do not stop.",
+      "next": "continue_cpr"
+    },
+    "continue_cpr": {
+      "type": "question",
+      "text": "Has help arrived or is the person showing signs of life (breathing, moving)?",
+      "yes": "help_arrived",
+      "no": "keep_going"
+    },
+    "keep_going": {
+      "type": "instruction",
+      "text": "Continue CPR — 30 compressions then 2 rescue breaths (or compressions only). Do not stop unless you are physically unable to continue. Help is on the way.",
+      "next": "continue_cpr"
+    },
+    "help_arrived": {
+      "type": "end",
+      "text": "Well done. Hand over to emergency services or follow their instructions. Stay calm."
+    }
+  }
+}

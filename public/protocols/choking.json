@@ -1,0 +1,69 @@
+{
+  "id": "choking",
+  "title": "Choking (Adult)",
+  "start": "assess_severity",
+  "nodes": {
+    "assess_severity": {
+      "type": "question",
+      "text": "Can the person cough, speak or breathe at all?",
+      "yes": "mild_choke",
+      "no": "severe_choke"
+    },
+    "mild_choke": {
+      "type": "instruction",
+      "text": "The blockage is mild. Encourage the person to keep coughing — this is the most effective way to clear the airway. Do not slap their back while they are coughing effectively.",
+      "next": "still_choking"
+    },
+    "still_choking": {
+      "type": "question",
+      "text": "Is the person still choking after coughing?",
+      "yes": "severe_choke",
+      "no": "end_mild_ok"
+    },
+    "end_mild_ok": {
+      "type": "end",
+      "text": "The airway is clear. Let the person rest. Seek medical advice if any discomfort remains."
+    },
+    "severe_choke": {
+      "type": "instruction",
+      "text": "Call emergency services immediately. Stand behind the person. Lean them slightly forward. Give up to 5 firm back blows between the shoulder blades with the heel of your hand.",
+      "next": "back_blows_helped"
+    },
+    "back_blows_helped": {
+      "type": "question",
+      "text": "Did the back blows dislodge the blockage?",
+      "yes": "end_cleared",
+      "no": "abdominal_thrusts"
+    },
+    "abdominal_thrusts": {
+      "type": "instruction",
+      "text": "Give up to 5 abdominal thrusts (Heimlich manoeuvre). Stand behind them, make a fist just above the navel, grasp with the other hand, then pull sharply inward and upward. Alternate 5 back blows and 5 abdominal thrusts.",
+      "next": "thrusts_helped"
+    },
+    "thrusts_helped": {
+      "type": "question",
+      "text": "Is the blockage now cleared and can the person breathe?",
+      "yes": "end_cleared",
+      "no": "unconscious_check"
+    },
+    "unconscious_check": {
+      "type": "question",
+      "text": "Is the person losing consciousness or falling?",
+      "yes": "start_cpr",
+      "no": "abdominal_thrusts"
+    },
+    "start_cpr": {
+      "type": "instruction",
+      "text": "Lower the person carefully to the floor. Call emergency services if not already done. Begin CPR — place hands on the centre of the chest and give 30 chest compressions. Each time you open the airway for rescue breaths, look for the object and remove it only if you can clearly see it.",
+      "next": "end_cpr_mode"
+    },
+    "end_cpr_mode": {
+      "type": "end",
+      "text": "Continue CPR until emergency services arrive or the person recovers. Do not leave them alone."
+    },
+    "end_cleared": {
+      "type": "end",
+      "text": "Airway is clear. The person should be examined by a doctor, especially if abdominal thrusts were used, as internal injuries are possible."
+    }
+  }
+}
