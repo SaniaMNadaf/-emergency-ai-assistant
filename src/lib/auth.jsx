@@ -3,10 +3,13 @@ import { supabase } from './supabase'
 
 const AuthContext = createContext()
 
+const DEMO_PASSWORD = 'demo1234'
+
 const DEMO_ACCOUNTS = [
-  { id: 'bystander', email: 'bystander@demo.com', password: 'demo', role: 'bystander', name: 'Emergency Bystander' },
-  { id: 'doctor-1', email: 'doctor@demo.com', password: 'demo', role: 'doctor', name: 'Dr. Sarah Chen' },
-  { id: 'family-1', email: 'family@demo.com', password: 'demo', role: 'family', name: 'Family Member' },
+  { id: 'bystander', email: 'bystander@demo.com', password: DEMO_PASSWORD, role: 'bystander', name: 'Emergency Bystander' },
+  { id: 'doctor-1', email: 'doctor@demo.com', password: DEMO_PASSWORD, role: 'doctor', name: 'Dr. Sarah Chen' },
+  { id: 'family-1', email: 'family@demo.com', password: DEMO_PASSWORD, role: 'family', name: 'Family Member' },
+  { id: 'patient-1', email: 'patient@demo.com', password: DEMO_PASSWORD, role: 'patient', name: 'Patient Demo' },
 ]
 
 export function AuthProvider({ children }) {
@@ -59,7 +62,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, DEMO_ACCOUNTS }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, DEMO_ACCOUNTS, DEMO_PASSWORD }}>
       {children}
     </AuthContext.Provider>
   )

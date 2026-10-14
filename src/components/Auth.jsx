@@ -1,16 +1,18 @@
 import { useState } from 'react'
 import { useAuth } from '../lib/auth'
+import { isSupabaseConfigured } from '../lib/supabase'
 
 export default function Auth() {
-  const { login } = useAuth()
+  const { login, DEMO_ACCOUNTS, DEMO_PASSWORD } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const demoMode = !isSupabaseConfigured()
 
   const handleLogin = async (email) => {
     setLoading(true)
     setError(null)
     try {
-      await login(email, 'demo')
+      await login(email, DEMO_PASSWORD)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -25,29 +27,34 @@ export default function Auth() {
         Choose your role to begin
       </p>
 
+      {demoMode && (
+        <div className="banner banner-offline" style={{ marginBottom: '16px', backgroundColor: '#eff6ff', color: '#1e40af', borderColor: '#3b82f6' }}>
+          Demo mode: Supabase not configured. Using mock auth.
+        </div>
+      )}
+
       {error && (
         <div className="banner banner-error" style={{ marginBottom: '16px' }}>{error}</div>
       )}
 
-      <div className="account-card" onClick={() => handleLogin('bystander@demo.com')} style={{ cursor: loading ? 'default' : 'pointer' }}>
-        <div className="account-role">Bystander</div>
-        <div className="account-name">Emergency Bystander</div>
-        <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>bystander@demo.com</div>
-      </div>
-
-      <div className="account-card" onClick={() => handleLogin('doctor@demo.com')} style={{ cursor: loading ? 'default' : 'pointer' }}>
-        <div className="account-role">Doctor / Responder</div>
-        <div className="account-name">Dr. Sarah Chen</div>
-        <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>doctor@demo.com</div>
-      </div>
-
-      <div className="account-card" onClick={() => handleLogin('family@demo.com')} style={{ cursor: loading ? 'default' : 'pointer' }}>
-        <div className="account-role">Family Member</div>
-        <div className="account-name">Family Member</div>
-        <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>family@demo.com</div>
-      </div>
+      {DEMO_ACCOUNTS.map((acct) => (
+        <div
+          key={acct.id}
+          className="account-card"
+          onClick={() => !loading && handleLogin(acct.email)}
+          style={{ cursor: loading ? 'default' : 'pointer' }}
+        >
+          <div className="account-role">{acct.role.charAt(0).toUpperCase() + acct.role.slice(1)}</div>
+          <div className="account-name">{acct.name}</div>
+          <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>{acct.email}</div>
+        </div>
+      ))}
 
       {loading && <div style={{ textAlign: 'center', marginTop: '16px' }}>Signing you in...</div>}
+
+      <p style={{ textAlign: 'center', fontSize: '12px', color: 'var(--text-muted)', marginTop: '24px' }}>
+        Demo password: <code>{DEMO_PASSWORD}</code>
+      </p>
     </div>
   )
 }

@@ -2,63 +2,61 @@ import { useState } from 'react'
 import { requestGeolocation, requestMicrophone, requestCamera, requestNotification } from '../lib/permissions'
 import { SpeechRecognizer, speak } from '../lib/speech'
 
-const STEPS = ['idle', 'location', 'microphone', 'speech', 'done']
-
 export default function PermissionSetup({ onReady }) {
   const [step, setStep] = useState('idle')
   const [location, setLocation] = useState(null)
-  const [speechResult, setSpeechResult] = useState(null)
-  const [error, setError] = useState(null)
+  const [hasMic, setHasMic] = useState(false)
+  const [hasCamera, setHasCamera] = useState(false)
+  const [errors, setErrors] = useState([])
   const [listening, setListening] = useState(false)
+  const [speechResult, setSpeechResult] = useState(null)
+
+  const addError = (msg) => setErrors((prev) => [...prev, msg])
 
   const runAll = async () => {
-    setError(null)
-
+    setErrors([])
     setStep('location')
+
     try {
       const loc = await requestGeolocation()
       setLocation(loc)
     } catch (err) {
-      setError(`Location: ${err.message || 'denied'}`)
+      addError(`Location: ${err.message || 'permission denied'}`)
     }
 
     setStep('microphone')
-    const mic = await requestMicrophone()
-    if (!mic.supported) {
-      setError(`Microphone: ${mic.error || 'not available'}`)
-    }
 
-    setStep('speech')
+    const mic = await requestMicrophone()
+    setHasMic(mic.supported)
+    if (!mic.supported) addError(`Microphone: ${mic.error}`)
+
     const cam = await requestCamera()
-    if (!cam.supported) {
-      setError(`Camera: ${cam.error || 'not available'}`)
-    }
+    setHasCamera(cam.supported)
+    if (!cam.supported) addError(`Camera: ${cam.error}`)
+
     await requestNotification()
 
-    try {
-      speak('All systems ready. This is a test of text-to-speech.', {
-        onEnd: () => {
-          localStorage.setItem('permissions_done', 'true')
-          setStep('done')
-          onReady()
-        },
-      })
-    } catch {
-      setStep('done')
-      localStorage.setItem('permissions_done', 'true')
-      onReady()
-    }
+    setStep('speech')
+    speak('All systems ready. This is a test of text-to-speech.')
+
+    setTimeout(() => setStep('done'), 1000)
+  }
+
+  const handleContinue = () => {
+    localStorage.setItem('permissions_done', 'true')
+    onReady()
   }
 
   const testSpeechRecognition = () => {
     if (!SpeechRecognizer.isSupported()) {
-      setError('Speech recognition not supported in this browser')
+      addError('Speech recognition not supported in this browser')
       return
     }
-    setError(null)
+
     setListening(true)
     setSpeechResult(null)
 
+    let stopped = false
     let rec
     try {
       rec = new SpeechRecognizer(
@@ -67,7 +65,8 @@ export default function PermissionSetup({ onReady }) {
           speak(`You said: ${transcript}`)
         },
         (err) => {
-          setError(`Speech: ${err}`)
+          if (stopped) return
+          addError(`Speech: ${err}`)
           setListening(false)
         },
         () => {
@@ -76,12 +75,16 @@ export default function PermissionSetup({ onReady }) {
       )
       rec.start()
     } catch (err) {
-      setError(`Speech: ${err.message}`)
+      addError(`Speech: ${err.message}`)
       setListening(false)
+      return
     }
 
     setTimeout(() => {
-      if (rec) rec.stop()
+      if (!stopped) {
+        stopped = true
+        rec?.stop()
+      }
     }, 10000)
   }
 
@@ -94,18 +97,18 @@ export default function PermissionSetup({ onReady }) {
       </p>
 
       {step === 'idle' && (
-        <button className="btn btn-primary" onClick={runAll}>
-          Test All Permissions & Speech
+        <button className="btn btn-danger" onClick={runAll}>
+          Test Permissions & Speak
         </button>
       )}
 
       {step === 'location' && <div className="card">Requesting location...</div>}
       {step === 'microphone' && <div className="card">Requesting microphone & camera...</div>}
-      {step === 'speech' && <div className="card">Speaking a test message...</div>}
+      {step === 'speech' && <div className="card">Speaking: "All systems ready..."</div>}
 
       {location && (
         <div className="card" style={{ marginTop: '16px' }}>
-          <p><strong>✓ Location acquired</strong></p>
+          <p><strong>Location acquired</strong></p>
           <p style={{ fontSize: '14px' }}>Lat: {location.lat.toFixed(5)}, Lng: {location.lng.toFixed(5)}</p>
           <p style={{ fontSize: '14px' }}>Accuracy: ±{Math.round(location.accuracy)}m</p>
         </div>
@@ -113,24 +116,50 @@ export default function PermissionSetup({ onReady }) {
 
       {step === 'done' && (
         <div className="card" style={{ marginTop: '16px' }}>
-          <p><strong>✓ Text-to-speech test complete</strong></p>
-          <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>You should have heard a voice speaking.</p>
-          <button className="btn btn-outline" style={{ marginTop: '16px' }} onClick={testSpeechRecognition}>
-            {listening ? 'Listening... tap to stop' : 'Test Voice Recognition (say something)'}
-          </button>
-          {listening && <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginTop: '8px' }}>Listening for up to 10 seconds...</p>}
-          {speechResult && (
-            <div style={{ marginTop: '12px', padding: '12px', background: 'var(--surface)', borderRadius: '8px' }}>
-              <p><strong>You said:</strong> {speechResult}</p>
-            </div>
+          <p><strong>Permission tests complete</strong></p>
+          <ul style={{ fontSize: '14px', marginTop: '8px', paddingRight: '20px' }}>
+            <li>Microphone: {hasMic ? 'available' : 'not available'}</li>
+            <li>Camera: {hasCamera ? 'available' : 'not available'}</li>
+            <li>Location: {location ? 'available' : 'not available'}</li>
+          </ul>
+
+          {SpeechRecognizer.isSupported() && (
+            <>
+              <button
+                className="btn btn-outline"
+                style={{ marginTop: '16px' }}
+                onClick={testSpeechRecognition}
+                disabled={listening}
+              >
+                {listening ? 'Listening...' : 'Test Voice Recognition (say something)'}
+              </button>
+              {listening && <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginTop: '8px' }}>Listening for up to 10 seconds...</p>}
+              {speechResult && (
+                <div style={{ marginTop: '12px', padding: '12px', background: 'var(--surface)', borderRadius: '8px' }}>
+                  <p><strong>You said:</strong> {speechResult}</p>
+                </div>
+              )}
+            </>
+          )}
+
+          {!SpeechRecognizer.isSupported() && (
+            <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginTop: '16px' }}>
+              Speech recognition not supported in this browser. Tap-to-answer will be used.
+            </p>
           )}
         </div>
       )}
 
-      {error && (
+      {errors.length > 0 && (
         <div className="banner banner-error" style={{ marginTop: '16px' }}>
-          {error}
+          {errors.join('; ')}
         </div>
+      )}
+
+      {step === 'done' && (
+        <button className="btn btn-primary" style={{ marginTop: '16px' }} onClick={handleContinue}>
+          Continue to App
+        </button>
       )}
     </div>
   )

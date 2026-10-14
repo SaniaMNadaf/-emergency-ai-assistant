@@ -18,13 +18,14 @@ npm run dev
 
 ## Demo Accounts
 
-All passwords are `demo`:
+All passwords are `demo1234`:
 
 | Role       | Email                | Description          |
 |------------|----------------------|----------------------|
 | Bystander  | bystander@demo.com   | Reports emergencies  |
 | Doctor     | doctor@demo.com      | Responds to alerts   |
 | Family     | family@demo.com      | Read-only dashboard  |
+| Patient    | patient@demo.com     | Patient record       |
 
 ## Environment
 
