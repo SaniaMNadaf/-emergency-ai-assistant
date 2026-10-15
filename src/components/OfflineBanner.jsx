@@ -1,13 +1,23 @@
 import { useEffect, useState } from 'react'
+import { getPendingReportCount } from '../lib/broadcast'
 
 export default function OfflineBanner() {
   const [online, setOnline] = useState(() => navigator.onLine)
   const [mounted, setMounted] = useState(false)
+  const [pendingCount, setPendingCount] = useState(0)
 
   useEffect(() => {
     setMounted(true)
-    const goOnline = () => setOnline(true)
-    const goOffline = () => setOnline(false)
+    const updatePending = () => setPendingCount(getPendingReportCount())
+    updatePending()
+    const goOnline = () => {
+      setOnline(true)
+      updatePending()
+    }
+    const goOffline = () => {
+      setOnline(false)
+      updatePending()
+    }
     window.addEventListener('online', goOnline)
     window.addEventListener('offline', goOffline)
     return () => {
@@ -22,6 +32,11 @@ export default function OfflineBanner() {
     <div className={`banner ${online ? 'banner-online' : 'banner-offline'}`}>
       <span className="status-dot" style={{ background: online ? '#16a34a' : '#dc2626' }}></span>
       {online ? 'Online' : 'Offline — app continues to work'}
+      {pendingCount > 0 && (
+        <span style={{ fontSize: '12px', marginLeft: '8px' }}>
+          ({pendingCount} pending {pendingCount === 1 ? 'report' : 'reports'} — will send when connection returns)
+        </span>
+      )}
     </div>
   )
 }

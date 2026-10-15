@@ -14,6 +14,11 @@ export default function ProtocolRunner({ treeId, incidentId, user, onFinish, onC
   const [guardLoading, setGuardLoading] = useState(false)
 
   const sessionIdRef = useRef(null)
+  const userRef = useRef(user)
+
+  useEffect(() => {
+    userRef.current = user
+  }, [user])
 
   useEffect(() => {
     async function loadTreeAndCreateSession() {
@@ -25,13 +30,13 @@ export default function ProtocolRunner({ treeId, incidentId, user, onFinish, onC
         setCurrentNodeId(data.start)
         speak(`Starting first aid protocol: ${data.title}`)
 
-        // Create protocol_sessions row once
-        if (user && supabase) {
+        const currentUser = userRef.current
+        if (currentUser && supabase) {
           const { data: sess, error: sessErr } = await supabase
             .from('protocol_sessions')
             .insert({
               incident_id: incidentId || null,
-              user_id: user.id,
+              user_id: currentUser.id,
               tree_id: treeId,
               steps: { current: data.start, history: [] },
               started_at: new Date().toISOString()
@@ -54,7 +59,7 @@ export default function ProtocolRunner({ treeId, incidentId, user, onFinish, onC
     return () => {
       speakStop()
     }
-  }, [treeId, incidentId, user])
+  }, [treeId, incidentId])
 
   // Update session by id as steps change
   useEffect(() => {

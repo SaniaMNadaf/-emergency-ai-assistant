@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from './lib/auth'
+import { initOfflineSync } from './lib/broadcast'
 import OfflineBanner from './components/OfflineBanner'
 import Auth from './components/Auth'
 import PermissionSetup from './components/PermissionSetup'
@@ -33,6 +34,12 @@ export default function App() {
     const done = localStorage.getItem('permissions_done') === 'true'
     setPermissionsDone(done)
   }, [])
+
+  useEffect(() => {
+    if (user) {
+      initOfflineSync(user)
+    }
+  }, [user])
 
   if (loading) {
     return (

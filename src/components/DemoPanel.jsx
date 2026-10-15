@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { requestGeolocation } from '../lib/permissions'
-import { reportEmergency } from '../lib/broadcast'
-
-const DEMO_FALLBACK_LAT = 18.5204
-const DEMO_FALLBACK_LNG = 73.8567
+import { reportEmergency, getDemoResponderLocation } from '../lib/broadcast'
 
 export default function DemoPanel({ user, onClose }) {
   const [responders, setResponders] = useState([])
@@ -28,23 +24,24 @@ export default function DemoPanel({ user, onClose }) {
     try {
       let loc = null
       try {
-        loc = await requestGeolocation()
-      } catch {
-        // GPS unavailable — fall back to first responder's area via nearby_responders
-        const { data: nearby } = await supabase.rpc('nearby_responders', {
-          lat: DEMO_FALLBACK_LAT,
-          lng: DEMO_FALLBACK_LNG,
-          radius_m: 50000
+        const pos = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 })
         })
-        if (nearby && nearby.length > 0) {
-          loc = { lat: DEMO_FALLBACK_LAT, lng: DEMO_FALLBACK_LNG, accuracy: 1000 }
+        loc = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }
+      } catch {
+        const demoLoc = await getDemoResponderLocation()
+        if (demoLoc) {
+          loc = { lat: demoLoc.lat, lng: demoLoc.lng, accuracy: 1000 }
+          setMessage(`GPS unavailable — using demo responder location near ${demoLoc.displayName}`)
         } else {
-          loc = { lat: DEMO_FALLBACK_LAT, lng: DEMO_FALLBACK_LNG, accuracy: 1000 }
+          setMessage('No GPS and no demo responders found — cannot determine location')
+          setLoading(false)
+          return
         }
       }
 
-      await reportEmergency(user, loc, null)
-      setMessage('Triggered fake emergency with GPS/location and broadcast logic!')
+      await reportEmergency(user, loc, null, { forceTier1: true })
+      setMessage('Triggered fake emergency! Tier 1 doctor alerted.')
       loadResponders()
     } catch (err) {
       setMessage(`Error: ${err.message}`)

@@ -65,8 +65,6 @@ export default function StatusScreen({ incident, broadcasts: initialBroadcasts, 
         const { success, nextTier } = await escalateBroadcasts(incident.id, currentTier)
         if (success) {
           setCurrentTier(nextTier)
-        } else if (currentTier < 3) {
-          setCurrentTier(prev => Math.min(3, prev + 1))
         }
       }
     }, ESCALATION_INTERVAL_MS)
