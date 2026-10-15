@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { Button } from './ui/Button'
+import { Card } from './ui/Card'
+import { Badge } from './ui/Badge'
+import { AlertTriangle, LogOut, Settings } from 'lucide-react'
 
 export default function FamilyDashboard({ user, onOpenDemoPanel, onLogout }) {
   const [hasAccess, setHasAccess] = useState(false)
@@ -73,16 +77,24 @@ export default function FamilyDashboard({ user, onOpenDemoPanel, onLogout }) {
     }
   }, [patient])
 
-  if (loading) return <div className="card text-center">Checking care link access...</div>
+  if (loading) return (
+    <div style={{ padding: 'var(--sp-4)', textAlign: 'center' }}>
+      <div className="spinner"></div>
+      <p style={{ color: 'var(--color-text-muted)', marginTop: 'var(--sp-3)' }}>Checking care link access...</p>
+    </div>
+  )
 
   if (!hasAccess) {
     return (
-      <div style={{ maxWidth: '480px', margin: '0 auto', padding: '16px', textAlign: 'center' }}>
-        <div className="card" style={{ padding: '40px 20px' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--sp-4)', textAlign: 'center' }}>
+        <Card title="No access" style={{ textAlign: 'center', padding: 'var(--sp-8) var(--sp-5)' }}>
           <h2>No access</h2>
-          <p style={{ color: 'var(--text-muted)' }}>You do not have an active care link to any patient, or access has been revoked.</p>
-        </div>
-        <button className="btn btn-outline" onClick={onLogout} style={{ marginTop: '16px' }}>Logout</button>
+          <p style={{ color: 'var(--color-text-muted)' }}>You do not have an active care link to any patient, or access has been revoked.</p>
+          <Button variant="outline" onClick={onLogout} style={{ marginTop: 'var(--sp-4)' }}>
+            <LogOut size={16} style={{ marginRight: 'var(--sp-1)' }} />
+            Logout
+          </Button>
+        </Card>
       </div>
     )
   }
@@ -91,54 +103,81 @@ export default function FamilyDashboard({ user, onOpenDemoPanel, onLogout }) {
   const isMedicationTaken = latestMedication && String(latestMedication.value) === '1'
 
   return (
-    <div style={{ maxWidth: '480px', margin: '0 auto', padding: '16px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+    <div style={{ paddingBottom: 'var(--sp-16)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--sp-4)' }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: '20px' }}>{patient?.name || 'Patient'} Dashboard</h2>
-          <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Linked Family View</span>
+          <h2 style={{ margin: 0, fontSize: 'var(--font-size-xl)' }}>{patient?.name || 'Patient'} Dashboard</h2>
+          <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>Linked Family View</span>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button className="btn btn-outline" onClick={onOpenDemoPanel} style={{ width: 'auto', padding: '8px 12px', fontSize: '14px' }}>
-            Demo Panel
+        <div style={{ display: 'flex', gap: 'var(--sp-2)' }}>
+          <button className="btn btn-ghost btn-icon btn-sm" onClick={onOpenDemoPanel} aria-label="Demo panel">
+            <Settings size={20} />
           </button>
-          <button className="btn btn-outline" onClick={onLogout} style={{ width: 'auto', padding: '8px 12px', fontSize: '14px' }}>
-            Logout
+          <button className="btn btn-ghost btn-icon btn-sm" onClick={onLogout} aria-label="Logout">
+            <LogOut size={20} />
           </button>
         </div>
       </div>
 
       {incidents.filter(i => i.status === 'open' || i.status === 'acknowledged').length > 0 && (
-        <div className="card" style={{ background: '#fee2e2', borderColor: '#dc2626', marginBottom: '16px' }}>
-          <h2 style={{ color: '#991b1b', margin: '0 0 8px' }}>🚨 ACTIVE EMERGENCY ALERT</h2>
+        <Card style={{ background: 'var(--color-danger-light)', borderColor: 'var(--color-danger)', marginBottom: 'var(--sp-4)' }}>
+          <h2 style={{ color: 'var(--color-danger)', margin: '0 0 var(--sp-2)' }}>🚨 ACTIVE EMERGENCY ALERT</h2>
           <p>Your linked patient has triggered an emergency alert!</p>
-        </div>
+        </Card>
       )}
 
-      <div className="card" style={{ marginBottom: '16px' }}>
-        <h3>Medication Status</h3>
-        <p style={{ fontSize: '16px', fontWeight: 600 }}>
-          {latestMedication ? (isMedicationTaken ? '✓ Taken' : '✕ Skipped') : 'No status recorded today'}
-        </p>
-      </div>
-
-      <div className="card">
-        <h3>Latest Readings</h3>
-        {readings.filter(r => r.type !== 'medication').length === 0 && <p style={{ color: 'var(--text-muted)' }}>No readings recorded yet.</p>}
-        {readings.filter(r => r.type !== 'medication').map((r) => (
-          <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
-            <div>
-              <strong style={{ textTransform: 'uppercase' }}>{r.type.replace('_', ' ')}</strong>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{new Date(r.taken_at).toLocaleTimeString()}</div>
-            </div>
-            <div>
-              <span style={{ fontSize: '18px', fontWeight: 700, color: r.abnormal ? 'var(--danger)' : 'var(--text)' }}>
-                {r.value}
+      <Card title="Medication Status" style={{ marginBottom: 'var(--sp-4)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)' }}>
+          {latestMedication ? (
+            <>
+              <Badge variant={isMedicationTaken ? 'ok' : 'declined'} style={{ fontSize: 'var(--font-size-sm)' }}>
+                {isMedicationTaken ? '✓ Taken' : '✕ Skipped'}
+              </Badge>
+              <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
+                as of {new Date(latestMedication.taken_at).toLocaleTimeString()}
               </span>
-              {r.abnormal && <span style={{ marginLeft: '8px', fontSize: '12px', color: 'var(--danger)', fontWeight: 600 }}>ABNORMAL</span>}
+            </>
+          ) : (
+            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>No status recorded today</span>
+          )}
+        </div>
+      </Card>
+
+      <Card title="Latest Readings">
+        {readings.filter(r => r.type !== 'medication').length === 0 ? (
+          <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>No readings recorded yet.</p>
+        ) : (
+          readings.filter(r => r.type !== 'medication').map((r) => (
+            <div
+              key={r.id}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: 'var(--sp-2) 0',
+                borderBottom: '1px solid var(--color-border)',
+              }}
+            >
+              <div>
+                <strong style={{ textTransform: 'uppercase', fontSize: 'var(--font-size-sm)' }}>{r.type.replace('_', ' ')}</strong>
+                <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+                  {new Date(r.taken_at).toLocaleTimeString()}
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <span style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: r.abnormal ? 'var(--color-danger)' : 'var(--color-text)' }}>
+                  {r.value}
+                </span>
+                {r.abnormal && (
+                  <Badge variant="abnormal" style={{ display: 'block', marginTop: 'var(--sp-1)', fontSize: 'var(--font-size-xs)' }}>
+                    ABNORMAL
+                  </Badge>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))
+        )}
+      </Card>
     </div>
   )
 }

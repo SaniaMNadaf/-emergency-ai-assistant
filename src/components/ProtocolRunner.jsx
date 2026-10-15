@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { speak, speakStop, SpeechRecognizer } from '../lib/speech'
 import { supabase } from '../lib/supabase'
+import { Button } from './ui/Button'
+import { Card } from './ui/Card'
+import { Banner } from './ui/Banner'
+import { Mic, MicOff, Volume2, Phone, Check, X } from 'lucide-react'
 
 export default function ProtocolRunner({ treeId, incidentId, user, onFinish, onCancel }) {
   const [tree, setTree] = useState(null)
@@ -12,6 +16,7 @@ export default function ProtocolRunner({ treeId, incidentId, user, onFinish, onC
   const [_sessionId, setSessionId] = useState(null)
   const [guardStatus, setGuardStatus] = useState(null)
   const [guardLoading, setGuardLoading] = useState(false)
+  const [progress, setProgress] = useState(0)
 
   const sessionIdRef = useRef(null)
   const userRef = useRef(user)
@@ -61,7 +66,6 @@ export default function ProtocolRunner({ treeId, incidentId, user, onFinish, onC
     }
   }, [treeId, incidentId])
 
-  // Update session by id as steps change
   useEffect(() => {
     if (tree && currentNodeId && sessionIdRef.current && supabase) {
       supabase.from('protocol_sessions')
@@ -80,15 +84,17 @@ export default function ProtocolRunner({ treeId, incidentId, user, onFinish, onC
       if (node && node.text) {
         speak(node.text)
       }
+      const stepCount = Object.keys(tree.nodes).length
+      const currentStep = history.length + 1
+      setProgress((currentStep / stepCount) * 100)
     }
-  }, [currentNodeId, tree])
+  }, [currentNodeId, tree, history])
 
   const handleAnswer = async (answerYes) => {
     if (!tree || !currentNodeId) return
     const node = tree.nodes[currentNodeId]
     const nextId = answerYes ? node.yes : node.no
 
-    // Call protocol-guard API for safety check
     setGuardLoading(true)
     try {
       const guardRes = await fetch('/api/protocol-guard', {
@@ -105,7 +111,6 @@ export default function ProtocolRunner({ treeId, incidentId, user, onFinish, onC
       setGuardStatus(guardData)
 
       if (guardData.guard === 'block') {
-        // Block the action and warn the user
         setGuardLoading(false)
         if (!confirm('⚠️ The protocol guard flagged this answer as potentially unsafe. Proceed anyway?')) {
           return
@@ -134,10 +139,7 @@ export default function ProtocolRunner({ treeId, incidentId, user, onFinish, onC
   }
 
   const startVoiceInput = () => {
-    if (!SpeechRecognizer.isSupported()) {
-      alert('Speech recognition not supported in this browser. Please use buttons.')
-      return
-    }
+    if (!SpeechRecognizer.isSupported()) return
     setListening(true)
     try {
       const rec = new SpeechRecognizer(
@@ -164,70 +166,137 @@ export default function ProtocolRunner({ treeId, incidentId, user, onFinish, onC
     }
   }
 
-  if (loading) return <div className="card text-center">Loading protocol...</div>
-  if (error) return <div className="banner banner-error">Error: {error}</div>
-  if (!tree || !currentNodeId) return <div className="card text-center">Protocol unavailable offline.</div>
+  if (loading) return (
+    <div style={{ padding: 'var(--sp-4)', textAlign: 'center' }}>
+      <div className="spinner"></div>
+      <p style={{ color: 'var(--color-text-muted)', marginTop: 'var(--sp-3)' }}>Loading protocol...</p>
+    </div>
+  )
+  if (error) return <Banner variant="error">Error: {error}</Banner>
+  if (!tree || !currentNodeId) return (
+    <div className="card text-center">
+      <p style={{ color: 'var(--color-text-muted)' }}>Protocol unavailable offline.</p>
+    </div>
+  )
 
   const node = tree.nodes[currentNodeId]
   const isEnd = node.type === 'end'
   const isQuestion = node.type === 'question'
 
   return (
-    <div style={{ maxWidth: '600px', margin: '0 auto', padding: '16px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <h2 style={{ margin: 0, fontSize: '20px' }}>{tree.title}</h2>
-        <button className="btn btn-outline" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px' }} onClick={onCancel}>
-          Exit
-        </button>
+    <div style={{ paddingBottom: 'var(--sp-20)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--sp-4)' }}>
+        <h2 style={{ margin: 0 }}>{tree.title}</h2>
+        <button className="btn btn-outline btn-icon btn-sm" onClick={onCancel} aria-label="Exit protocol">✕</button>
       </div>
 
-      <div className="card" style={{ padding: '24px', textAlign: 'center', minHeight: '200px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <p style={{ fontSize: '24px', fontWeight: 600, lineHeight: 1.4, marginBottom: '24px' }}>
+      <div style={{
+        height: '6px',
+        background: 'var(--color-border)',
+        borderRadius: 'var(--radius-full)',
+        overflow: 'hidden',
+        marginBottom: 'var(--sp-5)',
+      }}>
+        <div style={{
+          width: `${progress}%`,
+          height: '100%',
+          background: 'var(--color-primary)',
+          transition: 'width var(--transition-normal)',
+        }} />
+      </div>
+
+      <Card style={{ padding: 'var(--sp-6)', textAlign: 'center', minHeight: '280px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <p style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 600, lineHeight: 1.4, marginBottom: 'var(--sp-5)' }}>
           {node.text}
         </p>
 
-        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '20px', borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
+        <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--sp-4)', borderTop: '1px solid var(--color-border)', paddingTop: 'var(--sp-3)' }}>
           This is first-aid guidance, not a diagnosis. Call your local emergency number.
         </p>
 
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button className="btn btn-outline" onClick={() => speak(node.text)} style={{ flex: 1, minWidth: '120px' }}>
-            🔊 Repeat
+        {guardStatus && guardLoading && (
+          <div style={{ marginBottom: 'var(--sp-3)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
+            🛡️ Checking protocol safety...
+          </div>
+        )}
+
+        {guardStatus && !guardLoading && (
+          <div style={{
+            marginBottom: 'var(--sp-3)',
+            padding: 'var(--sp-2) var(--sp-3)',
+            borderRadius: 'var(--radius-md)',
+            fontSize: 'var(--font-size-xs)',
+            backgroundColor: guardStatus.guard === 'block' ? 'rgba(220, 38, 38, 0.1)' : guardStatus.guard === 'warning' ? 'rgba(245, 152, 27, 0.1)' : 'rgba(34, 197, 94, 0.1)',
+            color: guardStatus.guard === 'block' ? 'var(--color-danger)' : guardStatus.guard === 'warning' ? 'var(--color-warning)' : 'var(--color-success)',
+          }}>
+            🛡️ Guard: {guardStatus.guard}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-2)' }}>
+          <button className="btn btn-outline" onClick={() => speak(node.text)}>
+            <Volume2 size={20} /> Repeat
           </button>
 
           {isQuestion && (
             <>
-              <button className="btn btn-primary" onClick={() => handleAnswer(true)} style={{ flex: 2, background: 'var(--success)' }}>
-                YES
-              </button>
-              <button className="btn btn-danger" onClick={() => handleAnswer(false)} style={{ flex: 2 }}>
-                NO
-              </button>
-              <button className="btn btn-outline" onClick={startVoiceInput} style={{ flex: '1 0 100%', marginTop: '8px' }}>
-                {listening ? '🎤 Listening for Yes/No...' : '🎤 Answer by Voice'}
+              <div style={{ display: 'flex', gap: 'var(--sp-2)' }}>
+                <button
+                  className="btn btn-success"
+                  style={{ flex: 1, minHeight: '64px', fontSize: 'var(--font-size-xl)' }}
+                  onClick={() => handleAnswer(true)}
+                >
+                  <Check size={24} style={{ marginRight: 'var(--sp-2)' }} />
+                  YES
+                </button>
+                <button
+                  className="btn btn-danger"
+                  style={{ flex: 1, minHeight: '64px', fontSize: 'var(--font-size-xl)' }}
+                  onClick={() => handleAnswer(false)}
+                >
+                  <X size={24} style={{ marginRight: 'var(--sp-2)' }} />
+                  NO
+                </button>
+              </div>
+              <button
+                className="btn btn-ghost"
+                style={{ minHeight: '56px', marginTop: 'var(--sp-2)' }}
+                onClick={startVoiceInput}
+                aria-label={listening ? 'Listening for voice answer' : 'Answer by voice'}
+              >
+                {listening ? (
+                  <>
+                    <div className="spinner" style={{ width: '20px', height: '20px', marginRight: 'var(--sp-2)' }}></div>
+                    Listening...
+                  </>
+                ) : (
+                  <>
+                    <Mic size={20} style={{ marginRight: 'var(--sp-2)' }} />
+                    Answer by Voice
+                  </>
+                )}
               </button>
             </>
           )}
 
-        {!isQuestion && !isEnd && node.next && (
-          <button className="btn btn-primary" onClick={handleNext} style={{ flex: 2 }}>
-            NEXT STEP →
-          </button>
-        )}
+          {!isQuestion && !isEnd && node.next && (
+            <Button variant="primary" onClick={handleNext}>
+              NEXT STEP →
+            </Button>
+          )}
 
-        {isEnd && (
-          <button className="btn btn-primary" onClick={onFinish} style={{ flex: 2, background: 'var(--success)' }}>
-            FINISH PROTOCOL
-          </button>
-        )}
+          {isEnd && (
+            <Button variant="success" onClick={onFinish}>
+              FINISH PROTOCOL
+            </Button>
+          )}
+
+          <Button variant="outline" size="sm" fullWidth={false} style={{ marginTop: 'var(--sp-2)' }} onClick={() => window.open('tel:911', '_blank')} ariaLabel="Call emergency services">
+            <Phone size={16} style={{ marginRight: 'var(--sp-1)' }} />
+            Call Emergency Services
+          </Button>
         </div>
-
-        {guardStatus && (
-          <div style={{ marginTop: '12px', padding: '8px 12px', borderRadius: '6px', fontSize: '13px', backgroundColor: guardStatus.guard === 'block' ? 'rgba(220, 38, 38, 0.1)' : guardStatus.guard === 'warning' ? 'rgba(245, 152, 27, 0.1)' : 'rgba(34, 197, 94, 0.1)', color: guardStatus.guard === 'block' ? '#dc2626' : guardStatus.guard === 'warning' ? '#f59e0b' : '#22c55e' }}>
-            {guardLoading ? '🛡️ Checking...' : `🛡️ Guard: ${guardStatus.guard}${guardStatus.reason ? ' — ' + guardStatus.reason.substring(0, 100) : ''}`}
-          </div>
-        )}
-      </div>
+      </Card>
     </div>
   )
 }

@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { Button } from './ui/Button'
+import { Card } from './ui/Card'
+import { Badge } from './ui/Badge'
+import { Banner } from './ui/Banner'
+import { Plus, Check, X, Trash2, Settings, LogOut } from 'lucide-react'
 
 export default function PatientHome({ user, onOpenDemoPanel, onLogout }) {
   const [_, setReadings] = useState([])
@@ -16,7 +21,6 @@ export default function PatientHome({ user, onOpenDemoPanel, onLogout }) {
 
   async function loadPatientData() {
     if (!supabase) return
-    // Load readings
     const { data: rData } = await supabase
       .from('readings')
       .select('*')
@@ -25,14 +29,12 @@ export default function PatientHome({ user, onOpenDemoPanel, onLogout }) {
       .limit(10)
     if (rData) setReadings(rData)
 
-    // Load care links
     const { data: cData } = await supabase
       .from('care_links')
       .select('*, users!care_links_family_id_fkey(name, email)')
       .eq('patient_id', user.id)
     if (cData) setCareLinks(cData)
 
-    // Load access log
     const { data: aData } = await supabase
       .from('access_log')
       .select('*, users!access_log_viewer_id_fkey(name, email)')
@@ -86,7 +88,6 @@ export default function PatientHome({ user, onOpenDemoPanel, onLogout }) {
     e.preventDefault()
     if (!supabase || !familyEmail) return
 
-    // Find user by email with role 'family'
     const { data: familyUser, error: fErr } = await supabase
       .from('users')
       .select('id')
@@ -126,46 +127,35 @@ export default function PatientHome({ user, onOpenDemoPanel, onLogout }) {
   }
 
   return (
-    <div style={{ maxWidth: '480px', margin: '0 auto', padding: '16px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+    <div style={{ paddingBottom: 'var(--sp-16)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--sp-4)' }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: '20px' }}>{user.name}</h2>
-          <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Patient Dashboard</span>
+          <h2 style={{ margin: 0, fontSize: 'var(--font-size-xl)' }}>{user.name}</h2>
+          <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>Patient Dashboard</span>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button className="btn btn-outline" onClick={onOpenDemoPanel} style={{ width: 'auto', padding: '8px 12px', fontSize: '14px' }}>
-            Demo Panel
+        <div style={{ display: 'flex', gap: 'var(--sp-2)' }}>
+          <button className="btn btn-ghost btn-icon btn-sm" onClick={onOpenDemoPanel} aria-label="Demo panel">
+            <Settings size={20} />
           </button>
-          <button className="btn btn-outline" onClick={onLogout} style={{ width: 'auto', padding: '8px 12px', fontSize: '14px' }}>
-            Logout
-          </button>
-        </div>
-      </div>
-
-      {message && <div className="banner banner-online" style={{ marginBottom: '16px' }}>{message}</div>}
-
-      {/* Medication Quick Confirm */}
-      <div className="card" style={{ marginBottom: '16px' }}>
-        <h3>Medication Status</h3>
-        <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
-          <button className="btn btn-primary" onClick={() => handleMedication(true)} style={{ background: 'var(--success)' }}>
-            ✓ Confirm Taken
-          </button>
-          <button className="btn btn-danger" onClick={() => handleMedication(false)}>
-            ✕ Skip
+          <button className="btn btn-ghost btn-icon btn-sm" onClick={onLogout} aria-label="Logout">
+            <LogOut size={20} />
           </button>
         </div>
       </div>
 
-      {/* Add Reading */}
-      <div className="card" style={{ marginBottom: '16px' }}>
-        <h3>Add Health Reading</h3>
+      {message && <Banner variant={message.includes('Error') ? 'error' : 'success'} style={{ marginBottom: 'var(--sp-4)' }}>{message}</Banner>}
+
+      <Card title="Medication Status" style={{ marginBottom: 'var(--sp-4)' }}>
+        <p style={{ marginBottom: 'var(--sp-3)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>Confirm daily medication status</p>
+        <div style={{ display: 'flex', gap: 'var(--sp-2)' }}>
+          <Button variant="success" icon={Check} onClick={() => handleMedication(true)}>Taken</Button>
+          <Button variant="danger" icon={X} onClick={() => handleMedication(false)}>Skipped</Button>
+        </div>
+      </Card>
+
+      <Card title="Add Health Reading" style={{ marginBottom: 'var(--sp-4)' }}>
         <form onSubmit={handleAddReading}>
-          <select
-            className="input"
-            value={readingType}
-            onChange={(e) => setReadingType(e.target.value)}
-          >
+          <select className="input" value={readingType} onChange={(e) => setReadingType(e.target.value)}>
             <option value="bp_systolic">Blood Pressure (Systolic)</option>
             <option value="blood_sugar">Blood Sugar (mg/dL)</option>
             <option value="spo2">Blood Oxygen SpO2 (%)</option>
@@ -177,14 +167,14 @@ export default function PatientHome({ user, onOpenDemoPanel, onLogout }) {
             value={readingValue}
             onChange={(e) => setReadingValue(e.target.value)}
           />
-          <button type="submit" className="btn btn-primary">Save Reading</button>
+          <Button type="submit" variant="primary">
+            Save Reading
+          </Button>
         </form>
-      </div>
+      </Card>
 
-      {/* Family & Consent */}
-      <div className="card" style={{ marginBottom: '16px' }}>
-        <h3>Family & Consent Links</h3>
-        <form onSubmit={handleInviteFamily} style={{ marginBottom: '12px' }}>
+      <Card title="Family & Consent Links" style={{ marginBottom: 'var(--sp-4)' }}>
+        <form onSubmit={handleInviteFamily} style={{ marginBottom: 'var(--sp-3)' }}>
           <input
             type="email"
             className="input"
@@ -192,36 +182,57 @@ export default function PatientHome({ user, onOpenDemoPanel, onLogout }) {
             value={familyEmail}
             onChange={(e) => setFamilyEmail(e.target.value)}
           />
-          <button type="submit" className="btn btn-outline">Invite Family Member</button>
+          <Button type="submit" variant="outline">Invite Family Member</Button>
         </form>
 
+        {careLinks.length === 0 && (
+          <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>No family members linked yet.</p>
+        )}
         {careLinks.map((link) => (
-          <div key={link.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+          <div
+            key={link.id}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: 'var(--sp-2) 0',
+              borderBottom: '1px solid var(--color-border)',
+            }}
+          >
             <div>
               <strong>{link.users?.name || link.users?.email}</strong>
-              <div style={{ fontSize: '12px', color: link.active ? 'var(--success)' : 'var(--danger)' }}>
+              <Badge variant={link.active ? 'ok' : 'declined'} style={{ marginLeft: 'var(--sp-1)', fontSize: 'var(--font-size-xs)' }}>
                 {link.active ? 'Active' : 'Revoked'}
-              </div>
+              </Badge>
             </div>
             {link.active && (
-              <button className="btn btn-danger" style={{ width: 'auto', padding: '6px 12px', fontSize: '14px' }} onClick={() => handleRevoke(link.id)}>
-                Revoke
+              <button
+                className="btn btn-danger btn-sm btn-icon"
+                style={{ minWidth: 'auto', padding: 'var(--sp-1) var(--sp-2)' }}
+                onClick={() => handleRevoke(link.id)}
+                aria-label="Revoke access"
+              >
+                <Trash2 size={16} />
               </button>
             )}
           </div>
         ))}
-      </div>
+      </Card>
 
-      {/* Access Log */}
-      <div className="card">
-        <h3>Access Log</h3>
-        {accessLog.length === 0 && <p style={{ color: 'var(--text-muted)' }}>No access logs yet.</p>}
-        {accessLog.map((log) => (
-          <div key={log.id} style={{ fontSize: '13px', padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
-            <strong>{log.users?.name || 'Viewer'}</strong> viewed {log.what} at {new Date(log.viewed_at).toLocaleTimeString()}
-          </div>
-        ))}
-      </div>
+      <Card title="Access Log">
+        {accessLog.length === 0 ? (
+          <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>No access logs yet.</p>
+        ) : (
+          accessLog.map((log) => (
+            <div
+              key={log.id}
+              style={{ fontSize: 'var(--font-size-sm)', padding: 'var(--sp-1) 0', borderBottom: '1px solid var(--color-border)' }}
+            >
+              <strong>{log.users?.name || 'Viewer'}</strong> viewed {log.what} at {new Date(log.viewed_at).toLocaleTimeString()}
+            </div>
+          ))
+        )}
+      </Card>
     </div>
   )
 }

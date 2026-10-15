@@ -1,6 +1,17 @@
 import { useState, useEffect } from 'react'
 import { requestGeolocation } from '../lib/permissions'
 import { reportEmergency } from '../lib/broadcast'
+import { Button } from './ui/Button'
+import { Card } from './ui/Card'
+import { Banner } from './ui/Banner'
+import { Badge } from './ui/Badge'
+import { Upload, MapPin, FileText } from 'lucide-react'
+
+const steps = [
+  { number: 1, label: 'Incident Type', icon: FileText },
+  { number: 2, label: 'Photo', icon: Upload },
+  { number: 3, label: 'Location', icon: MapPin },
+]
 
 export default function ReportScreen({ user, onReportSubmitted, onCancel }) {
   const [location, setLocation] = useState(null)
@@ -50,57 +61,93 @@ export default function ReportScreen({ user, onReportSubmitted, onCancel }) {
   const tier1Ready = hasGps && hasPhoto
 
   return (
-    <div style={{ maxWidth: '480px', margin: '0 auto', padding: '16px' }}>
+    <div style={{ paddingBottom: 'var(--sp-20)' }}>
       <h1>Report Emergency</h1>
-      <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>
+      <p style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--sp-4)' }}>
         Confirm your location and attach a photo for Tier 1 doctor alerts.
       </p>
 
-      {error && <div className="banner banner-error" style={{ marginBottom: '16px' }}>{error}</div>}
+      <div style={{ marginBottom: 'var(--sp-5)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--sp-2)' }}>
+          {steps.map((step) => {
+            const isActive = step.number === (tier1Ready ? 3 : hasGps ? 3 : hasPhoto ? 2 : 1)
+            const isComplete = step.number < (tier1Ready ? 3 : hasGps ? 3 : hasPhoto ? 2 : 1)
+            return (
+              <div key={step.number} style={{ flex: 1, textAlign: 'center' }}>
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    background: isComplete ? 'var(--color-success)' : isActive ? 'var(--color-primary)' : 'var(--color-border)',
+                    color: isComplete || isActive ? 'var(--color-primary-contrast)' : 'var(--color-text-muted)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 600,
+                    fontSize: 'var(--font-size-sm)',
+                  }}
+                >
+                  {isComplete && '✓'}
+                  {!isComplete && step.number}
+                </div>
+                <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 'var(--sp-1)' }}>
+                  {step.label}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {error && <Banner variant="error" style={{ marginBottom: 'var(--sp-4)' }}>{error}</Banner>}
 
       <form onSubmit={handleSubmit}>
-        <div className="card" style={{ marginBottom: '16px' }}>
-          <h3>1. GPS Location</h3>
-          {locLoading && <p>Acquiring GPS lock...</p>}
-          {locError && <p style={{ color: 'var(--danger)' }}>GPS Error: {locError}. Tier 1 alert disabled.</p>}
+        <Card title="3. GPS Location" style={{ marginBottom: 'var(--sp-4)' }}>
+          {locLoading && <p style={{ color: 'var(--color-text-muted)' }}>Acquiring GPS lock...</p>}
+          {locError && (
+            <p style={{ color: 'var(--color-danger)', fontSize: 'var(--font-size-sm)' }}>GPS Error: {locError}. Tier 1 alert disabled.</p>
+          )}
           {location && (
-            <div>
-              <p style={{ color: 'var(--success)', fontWeight: 600 }}>✓ GPS Locked</p>
-              <p style={{ fontSize: '14px' }}>Lat: {location.lat.toFixed(5)}, Lng: {location.lng.toFixed(5)}</p>
-              <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Accuracy: ±{Math.round(location.accuracy)}m</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)' }}>
+              <span style={{ color: 'var(--color-success)', fontSize: 'var(--font-size-lg)' }}>✓</span>
+              <div>
+                <p style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>GPS Locked</p>
+                <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+                  Lat: {location.lat.toFixed(5)}, Lng: {location.lng.toFixed(5)}
+                </p>
+                <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>Accuracy: ±{Math.round(location.accuracy)}m</p>
+              </div>
             </div>
           )}
-        </div>
+        </Card>
 
-        <div className="card" style={{ marginBottom: '16px' }}>
-          <h3>2. Emergency Photo (Required for Tier 1)</h3>
+        <Card title="2. Emergency Photo (Required for Tier 1)" style={{ marginBottom: 'var(--sp-4)' }}>
           <input
             type="file"
             accept="image/*"
             capture="environment"
             onChange={handlePhotoChange}
-            style={{ marginBottom: '12px', width: '100%' }}
+            style={{ width: '100%', marginBottom: 'var(--sp-3)', fontSize: 'var(--font-size-sm)' }}
           />
           {photoPreview && (
-            <div style={{ marginTop: '8px' }}>
-              <img src={photoPreview} alt="Incident preview" style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: '8px' }} />
-            </div>
+            <img src={photoPreview} alt="Incident preview" style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: 'var(--radius-md)', marginTop: 'var(--sp-2)' }} />
           )}
-        </div>
+        </Card>
 
         {!tier1Ready && (
-          <div className="banner banner-offline" style={{ marginBottom: '16px' }}>
+          <Banner variant="warning" style={{ marginBottom: 'var(--sp-4)' }}>
             ⚠️ Without both GPS and photo, Tier 1 doctors will not be alerted immediately. You can still report and get protocol guidance.
-          </div>
+          </Banner>
         )}
 
-        <button type="submit" className="btn btn-danger" disabled={submitting} style={{ marginBottom: '12px' }}>
+        <Button type="submit" variant="danger" loading={submitting} style={{ marginBottom: 'var(--sp-3)' }}>
           {submitting ? 'Broadcasting...' : 'CONFIRM & BROADCAST EMERGENCY'}
-        </button>
+        </Button>
 
-        <button type="button" className="btn btn-outline" onClick={onCancel}>
+        <Button type="button" variant="ghost" onClick={onCancel} fullWidth={false} className="btn-inline">
           Cancel
-        </button>
+        </Button>
       </form>
     </div>
   )

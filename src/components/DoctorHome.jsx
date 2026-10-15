@@ -1,5 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { Button } from './ui/Button'
+import { Card } from './ui/Card'
+import { Badge } from './ui/Badge'
+import { LogOut, Settings, Bell, CheckCheck } from 'lucide-react'
 
 export default function DoctorHome({ user, onOpenAlert, onOpenDemoPanel, onLogout }) {
   const [responder, setResponder] = useState(null)
@@ -48,7 +52,6 @@ export default function DoctorHome({ user, onOpenAlert, onOpenDemoPanel, onLogou
     loadDoctorData()
   }, [user])
 
-  // Realtime subscription using useRef so it doesn't re-subscribe on every render
   useEffect(() => {
     if (!supabase || !responder) return
 
@@ -83,79 +86,90 @@ export default function DoctorHome({ user, onOpenAlert, onOpenDemoPanel, onLogou
     }
   }
 
-  if (loading) return <div className="card text-center">Loading responder profile...</div>
+  if (loading) return (
+    <div style={{ padding: 'var(--sp-4)', textAlign: 'center' }}>
+      <div className="spinner"></div>
+      <p style={{ color: 'var(--color-text-muted)', marginTop: 'var(--sp-3)' }}>Loading responder profile...</p>
+    </div>
+  )
+
+  const isAvailable = responder?.available ?? false
 
   return (
-    <div style={{ maxWidth: '480px', margin: '0 auto', padding: '16px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+    <div style={{ paddingBottom: 'var(--sp-20)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--sp-4)' }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: '20px' }}>{responder?.display_name || user.name}</h2>
-          <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>{responder?.specialty || 'Doctor / Responder'} (Tier {responder?.tier || 1})</span>
+          <h2 style={{ margin: 0, fontSize: 'var(--font-size-xl)' }}>{responder?.display_name || user.name}</h2>
+          <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
+            {responder?.specialty || 'Doctor / Responder'} (Tier {responder?.tier || 1})
+          </span>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button className="btn btn-outline" onClick={onOpenDemoPanel} style={{ width: 'auto', padding: '8px 12px', fontSize: '14px' }}>
-            Demo Panel
+        <div style={{ display: 'flex', gap: 'var(--sp-2)' }}>
+          <button className="btn btn-ghost btn-icon btn-sm" onClick={onOpenDemoPanel} aria-label="Demo panel">
+            <Settings size={20} />
           </button>
-          <button className="btn btn-outline" onClick={onLogout} style={{ width: 'auto', padding: '8px 12px', fontSize: '14px' }}>
-            Logout
+          <button className="btn btn-ghost btn-icon btn-sm" onClick={onLogout} aria-label="Logout">
+            <LogOut size={20} />
           </button>
         </div>
       </div>
 
-      <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+      <Card style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--sp-4)' }}>
         <div>
-          <h3>Availability Status</h3>
-          <p style={{ fontSize: '14px', color: 'var(--text-muted)', margin: 0 }}>
-            {responder?.available ? 'You are receiving emergency alerts.' : 'You are currently offline / unavailable.'}
+          <h3 style={{ margin: 0, marginBottom: 'var(--sp-2)' }}>Availability Status</h3>
+          <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', margin: 0 }}>
+            {isAvailable ? 'You are receiving emergency alerts.' : 'You are currently offline / unavailable.'}
           </p>
         </div>
-        <button
-          className={`btn ${responder?.available ? 'btn-primary' : 'btn-outline'}`}
+        <Button
+          variant={isAvailable ? 'primary' : 'outline'}
           onClick={toggleAvailability}
-          style={{ width: '100px', background: responder?.available ? 'var(--success)' : undefined }}
+          style={{ minWidth: '120px' }}
         >
-          {responder?.available ? 'AVAILABLE' : 'OFFLINE'}
-        </button>
-      </div>
+          {isAvailable ? 'AVAILABLE' : 'OFFLINE'}
+        </Button>
+      </Card>
 
-      <div className="card" style={{ marginBottom: '16px' }}>
-        <h3>Participation Score</h3>
-        <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
-          <div style={{ flex: 1, background: 'var(--surface)', padding: '12px', borderRadius: '8px', textAlign: 'center', border: '1px solid var(--border)' }}>
-            <div style={{ fontSize: '28px', fontWeight: 700, color: 'var(--primary)' }}>{stats.count}</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Responses Count</div>
+      <Card title="Participation Score" style={{ marginBottom: 'var(--sp-4)' }}>
+        <div style={{ display: 'flex', gap: 'var(--sp-4)', marginTop: 'var(--sp-3)' }}>
+          <div style={{ flex: 1, background: 'var(--color-bg)', padding: 'var(--sp-3)', borderRadius: 'var(--radius-md)', textAlign: 'center', border: '1px solid var(--color-border)' }}>
+            <div style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 700, color: 'var(--color-primary)' }}>{stats.count}</div>
+            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>Responses</div>
           </div>
-          <div style={{ flex: 1, background: 'var(--surface)', padding: '12px', borderRadius: '8px', textAlign: 'center', border: '1px solid var(--border)' }}>
-            <div style={{ fontSize: '28px', fontWeight: 700, color: 'var(--primary)' }}>{stats.avgSeconds}s</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Avg Response Time</div>
+          <div style={{ flex: 1, background: 'var(--color-bg)', padding: 'var(--sp-3)', borderRadius: 'var(--radius-md)', textAlign: 'center', border: '1px solid var(--color-border)' }}>
+            <div style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 700, color: 'var(--color-primary)' }}>{stats.avgSeconds}s</div>
+            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>Avg Response</div>
           </div>
         </div>
-      </div>
+      </Card>
 
-      <div className="card">
-        <h3>Past Responses</h3>
-        {pastResponses.length === 0 && <p style={{ color: 'var(--text-muted)' }}>No responses recorded yet.</p>}
+      <Card title="Recent Alerts">
+        {pastResponses.length === 0 && (
+          <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>No responses recorded yet.</p>
+        )}
         {pastResponses.map((b) => (
-          <div key={b.id} style={{ padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: '14px', display: 'flex', justifyContent: 'space-between' }}>
+          <div
+            key={b.id}
+            style={{
+              padding: 'var(--sp-2) 0',
+              borderBottom: '1px solid var(--color-border)',
+              fontSize: 'var(--font-size-sm)',
+              display: 'flex',
+              justifyContent: 'space-between',
+            }}
+          >
             <div>
               <div>Tier {b.tier} Alert</div>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{new Date(b.sent_at).toLocaleTimeString()}</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+                {new Date(b.sent_at).toLocaleTimeString()}
+              </div>
             </div>
-            <div>
-              <span style={{
-                padding: '2px 6px',
-                borderRadius: '4px',
-                fontSize: '11px',
-                fontWeight: 600,
-                background: b.status === 'acknowledged' ? '#dcfce8' : '#fee2e2',
-                color: b.status === 'acknowledged' ? '#166534' : '#991b1b'
-              }}>
-                {b.status.toUpperCase()}
-              </span>
-            </div>
+            <Badge variant={b.status === 'acknowledged' ? 'ack' : 'declined'}>
+              {b.status}
+            </Badge>
           </div>
         ))}
-      </div>
+      </Card>
     </div>
   )
 }

@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { reportEmergency, getDemoResponderLocation } from '../lib/broadcast'
+import { Button } from './ui/Button'
+import { Card } from './ui/Card'
+import { Badge } from './ui/Badge'
+import { Banner } from './ui/Banner'
+import { Smartphone, RefreshCw, Check, X, Trash2 } from 'lucide-react'
 
 export default function DemoPanel({ user, onClose }) {
   const [responders, setResponders] = useState([])
@@ -102,44 +107,86 @@ export default function DemoPanel({ user, onClose }) {
   }
 
   return (
-    <div style={{ maxWidth: '480px', margin: '0 auto', padding: '16px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h2>Demo Control Panel</h2>
-        <button className="btn btn-outline" onClick={onClose} style={{ width: 'auto', padding: '8px 16px' }}>Close</button>
+    <div style={{
+      position: 'fixed',
+      inset: 'var(--sp-4)',
+      background: 'var(--color-bg)',
+      borderRadius: 'var(--radius-lg)',
+      boxShadow: 'var(--shadow-xl)',
+      maxWidth: '480px',
+      margin: 'var(--sp-4) auto',
+      padding: 'var(--sp-5)',
+      overflowY: 'auto',
+      maxHeight: '90vh',
+      zIndex: 1000,
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--sp-4)' }}>
+        <h2 style={{ margin: 0 }}>Demo Control Panel</h2>
+        <button className="btn btn-ghost btn-icon btn-sm" onClick={onClose} aria-label="Close demo panel">✕</button>
       </div>
 
-      {message && <div className="banner banner-online" style={{ marginBottom: '16px' }}>{message}</div>}
+      {message && <Banner variant={message.includes('Error') ? 'error' : 'success'} style={{ marginBottom: 'var(--sp-4)' }}>{message}</Banner>}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
-        <button className="btn btn-primary" onClick={handleTriggerFakeEmergency} disabled={loading}>
-          🚨 Trigger Fake Emergency
-        </button>
-        <button className="btn btn-primary" onClick={handleFakeDoctorAccept} disabled={loading} style={{ background: 'var(--success)' }}>
-          👨‍⚕️ Fake Doctor Accepts (ETA 8m)
-        </button>
-        <button className="btn btn-danger" onClick={handleResetDemo} disabled={loading}>
-          🔄 Reset Demo Data
-        </button>
-      </div>
+      <Card style={{ marginBottom: 'var(--sp-4)' }}>
+        <h3 style={{ marginTop: 0, marginBottom: 'var(--sp-3)' }}>Emergency Simulation</h3>
+        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginBottom: 'var(--sp-3)' }}>
+          Trigger a simulated emergency to test alert broadcasts.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-2)' }}>
+          <Button variant="danger" icon={Smartphone} loading={loading} onClick={handleTriggerFakeEmergency}>
+            Trigger Fake Emergency
+          </Button>
+          <Button variant="success" icon={Check} loading={loading} onClick={handleFakeDoctorAccept}>
+            Fake Doctor Accept (ETA 8m)
+          </Button>
+          <Button variant="outline" icon={RefreshCw} loading={loading} onClick={handleResetDemo}>
+            Reset Demo Data
+          </Button>
+        </div>
+      </Card>
 
-      <div className="card">
-        <h3>Responders Status</h3>
-        {responders.map((r) => (
-          <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
-            <div>
-              <strong>{r.display_name}</strong>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{r.kind} (Tier {r.tier})</div>
-            </div>
-            <button
-              className="btn btn-outline"
-              style={{ width: 'auto', padding: '4px 8px', fontSize: '12px', background: r.available ? '#dcfce8' : '#fee2e2' }}
-              onClick={() => toggleResponderAvail(r.id, r.available)}
+      <Card>
+        <h3 style={{ marginTop: 0, marginBottom: 'var(--sp-3)' }}>Responder Status</h3>
+        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginBottom: 'var(--sp-3)' }}>
+          {responders.filter(r => r.available).length} of {responders.length} responders on duty
+        </p>
+        {responders.length === 0 ? (
+          <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>No responders found.</p>
+        ) : (
+          responders.map((r) => (
+            <div
+              key={r.id}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: 'var(--sp-2) 0',
+                borderBottom: '1px solid var(--color-border)',
+              }}
             >
-              {r.available ? 'Available' : 'Offline'}
-            </button>
-          </div>
-        ))}
-      </div>
+              <div>
+                <strong>{r.display_name}</strong>
+                <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+                  {r.kind} • Tier {r.tier} • {r.specialty}
+                </div>
+              </div>
+              <Button
+                variant={r.available ? 'success' : 'ghost'}
+                size="sm"
+                style={{ minWidth: 'auto', padding: 'var(--sp-1) var(--sp-3)' }}
+                onClick={() => toggleResponderAvail(r.id, r.available)}
+                ariaLabel={r.available ? 'Set offline' : 'Set available'}
+              >
+                {r.available ? (
+                  <Badge variant="ok" style={{ fontSize: 'var(--font-size-xs)' }}>Available</Badge>
+                ) : (
+                  <Badge variant="declined" style={{ fontSize: 'var(--font-size-xs)' }}>Offline</Badge>
+                )}
+              </Button>
+            </div>
+          ))
+        )}
+      </Card>
     </div>
   )
 }

@@ -1,6 +1,16 @@
 import { useState } from 'react'
 import { useAuth } from '../lib/auth'
 import { isSupabaseConfigured } from '../lib/supabase'
+import { Button } from './ui/Button'
+import { Card } from './ui/Card'
+import { Badge } from './ui/Badge'
+
+const roleIcons = {
+  bystander: '\uD83E\uDE80',
+  doctor: '\uD83D\uDC68\u200D\uD83C\uDFEB\u2611\uFE0F',
+  family: '\uD83D\uDC6B',
+  patient: '\uD83E\uDEE0',
+}
 
 export default function Auth() {
   const { login, DEMO_ACCOUNTS, DEMO_PASSWORD } = useAuth()
@@ -21,40 +31,57 @@ export default function Auth() {
   }
 
   return (
-    <div style={{ maxWidth: '480px', margin: '0 auto', padding: '20px' }}>
-      <h1 style={{ textAlign: 'center', marginBottom: '8px' }}>Emergency Assistant</h1>
-      <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '32px' }}>
-        Choose your role to begin
-      </p>
-
-      {demoMode && (
-        <div className="banner banner-offline" style={{ marginBottom: '16px', backgroundColor: '#eff6ff', color: '#1e40af', borderColor: '#3b82f6' }}>
-          Demo mode: Supabase not configured. Using mock auth.
+    <div style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--sp-4)' }}>
+      <div style={{ width: '100%', maxWidth: '400px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 'var(--sp-6)' }}>
+          <div style={{ fontSize: '48px', marginBottom: 'var(--sp-2)' }}>🩺</div>
+          <h1 style={{ margin: 0, fontSize: 'var(--font-size-3xl)' }}>Emergency Assistant</h1>
+          <p style={{ color: 'var(--color-text-muted)', marginTop: 'var(--sp-2)', fontSize: 'var(--font-size-sm)' }}>
+            Choose your role to begin
+          </p>
         </div>
-      )}
 
-      {error && (
-        <div className="banner banner-error" style={{ marginBottom: '16px' }}>{error}</div>
-      )}
+        {demoMode && (
+          <div className="banner banner-info" style={{ marginBottom: 'var(--sp-4)' }}>
+            <span>🧪 Demo mode: Supabase not configured. Using mock auth.</span>
+          </div>
+        )}
 
-      {DEMO_ACCOUNTS.map((acct) => (
-        <div
-          key={acct.id}
-          className="account-card"
-          onClick={() => !loading && handleLogin(acct.email)}
-          style={{ cursor: loading ? 'default' : 'pointer' }}
-        >
-          <div className="account-role">{acct.role.charAt(0).toUpperCase() + acct.role.slice(1)}</div>
-          <div className="account-name">{acct.name}</div>
-          <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>{acct.email}</div>
+        {error && <div className="banner banner-error" style={{ marginBottom: 'var(--sp-4)' }}>{error}</div>}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-3)' }}>
+          {DEMO_ACCOUNTS.map((acct) => (
+            <Card
+              key={acct.id}
+              className="account-card"
+              interactive
+              onClick={() => !loading && handleLogin(acct.email)}
+              style={{ cursor: loading ? 'default' : 'pointer' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-3)' }}>
+                <span style={{ fontSize: '32px' }}>{roleIcons[acct.role] || '\uD83D\uDC64'}</span>
+                <div style={{ flex: 1 }}>
+                  <div className="account-role">{acct.role.charAt(0).toUpperCase() + acct.role.slice(1)}</div>
+                  <div className="account-name">{acct.name}</div>
+                  <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>{acct.email}</div>
+                </div>
+                <Badge variant="tier1">{`Password: ${DEMO_PASSWORD}`}</Badge>
+              </div>
+            </Card>
+          ))}
         </div>
-      ))}
 
-      {loading && <div style={{ textAlign: 'center', marginTop: '16px' }}>Signing you in...</div>}
+        {loading && (
+          <div style={{ textAlign: 'center', marginTop: 'var(--sp-4)' }}>
+            <div className="spinner" style={{ width: '32px', height: '32px', margin: '0 auto' }}></div>
+            <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginTop: 'var(--sp-2)' }}>Signing in...</p>
+          </div>
+        )}
 
-      <p style={{ textAlign: 'center', fontSize: '12px', color: 'var(--text-muted)', marginTop: '24px' }}>
-        Demo password: <code>{DEMO_PASSWORD}</code>
-      </p>
+        <p style={{ textAlign: 'center', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 'var(--sp-4)' }}>
+          Demo password: <code style={{ background: 'var(--color-border)', padding: '2px 6px', borderRadius: '4px' }}>{DEMO_PASSWORD}</code>
+        </p>
+      </div>
     </div>
   )
 }

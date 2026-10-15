@@ -1,6 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { escalateBroadcasts, ESCALATION_INTERVAL_MS } from '../lib/broadcast'
+import { Button } from './ui/Button'
+import { Card } from './ui/Card'
+import { Badge } from './ui/Badge'
+import { StatusStepper } from './ui/StatusStepper'
+import { Clock, MapPin, Phone } from 'lucide-react'
+
+const stepperSteps = [
+  { label: 'Sent', icon: '✓' },
+  { label: 'Tier 1', icon: '1' },
+  { label: 'Tier 2', icon: '2' },
+  { label: 'Tier 3', icon: '3' },
+  { label: 'Accepted', icon: '✓' },
+]
 
 export default function StatusScreen({ incident, broadcasts: initialBroadcasts, initialTier = 1, onStartProtocol, onReset }) {
   const [broadcasts, setBroadcasts] = useState(initialBroadcasts || [])
@@ -8,8 +21,16 @@ export default function StatusScreen({ incident, broadcasts: initialBroadcasts, 
   const [eta, setEta] = useState(null)
   const [currentTier, setCurrentTier] = useState(initialTier)
   const [falseAlarm, setFalseAlarm] = useState(false)
+  const [countdown, setCountdown] = useState(ESCALATION_INTERVAL_MS / 1000)
 
-  // Realtime subscription on broadcasts for this incident
+  const incidentRef = useRef(incident)
+  const currentTierRef = useRef(currentTier)
+
+  useEffect(() => {
+    incidentRef.current = incident
+    currentTierRef.current = currentTier
+  }, [incident, currentTier])
+
   useEffect(() => {
     if (!supabase || !incident) return
 
@@ -55,21 +76,31 @@ export default function StatusScreen({ incident, broadcasts: initialBroadcasts, 
     }
   }, [incident])
 
-  // Tier escalation timer (15 seconds per tier, stopping as soon as acknowledged)
   useEffect(() => {
     if (acknowledgedResponder || falseAlarm || currentTier >= 3) return
+    if (broadcasts.some(b => b.status === 'acknowledged')) return
 
     const timer = setTimeout(async () => {
       const hasAck = broadcasts.some(b => b.status === 'acknowledged')
-      if (!hasAck) {
-        const { success, nextTier } = await escalateBroadcasts(incident.id, currentTier)
-        if (success) {
-          setCurrentTier(nextTier)
-        }
+      if (hasAck) return
+
+      const { success, nextTier } = await escalateBroadcasts(incidentRef.current.id, currentTierRef.current)
+      if (success) {
+        setCurrentTier(nextTier)
       }
     }, ESCALATION_INTERVAL_MS)
 
-    return () => clearTimeout(timer)
+    const interval = setInterval(() => {
+      setCountdown(prev => {
+        const newCount = prev - 1
+        return newCount <= 0 ? ESCALATION_INTERVAL_MS / 1000 : newCount
+      })
+    }, 1000)
+
+    return () => {
+      clearTimeout(timer)
+      clearInterval(interval)
+    }
   }, [broadcasts, acknowledgedResponder, currentTier, falseAlarm, incident])
 
   const handleFalseAlarm = async () => {
@@ -82,61 +113,76 @@ export default function StatusScreen({ incident, broadcasts: initialBroadcasts, 
     onReset()
   }
 
+  const acceptedStep = acknowledgedResponder ? 4 : currentTier - 1
+  const activeStep = acknowledgedResponder ? 4 : currentTier
+
   return (
-    <div style={{ maxWidth: '480px', margin: '0 auto', padding: '16px' }}>
+    <div style={{ paddingBottom: 'var(--sp-20)' }}>
       <h1>Emergency Broadcast Status</h1>
 
       {acknowledgedResponder ? (
-        <div className="card" style={{ background: '#dcfce8', borderColor: '#16a34a', marginBottom: '16px' }}>
-          <h2 style={{ color: '#166534', margin: '0 0 8px' }}>✓ Responder Accepted</h2>
-          <p style={{ fontSize: '18px', fontWeight: 600 }}>{acknowledgedResponder}</p>
-          <p style={{ fontSize: '16px' }}>Estimated Arrival (ETA): <strong>{eta || 10} minutes</strong></p>
-        </div>
+        <Card style={{ background: 'var(--color-success-light)', borderColor: 'var(--color-success)', marginBottom: 'var(--sp-4)' }}>
+          <h2 style={{ color: 'var(--color-success)', margin: '0 0 var(--sp-2)' }}>✓ Responder Accepted</h2>
+          <p style={{ fontSize: 'var(--font-size-xl)', fontWeight: 600, margin: 0 }}>{acknowledgedResponder}</p>
+          <p style={{ fontSize: 'var(--font-size-lg)', marginTop: 'var(--sp-2)' }}>Estimated Arrival (ETA): <strong>{eta || 10} minutes</strong></p>
+        </Card>
       ) : (
-        <div className="card" style={{ background: '#fef3c7', borderColor: '#d97706', marginBottom: '16px' }}>
-          <h2 style={{ color: '#92400e', margin: '0 0 8px' }}>🚨 Alert Broadcasted (Tier {currentTier})</h2>
+        <Card style={{ background: 'var(--color-warning-light)', borderColor: 'var(--color-warning)', marginBottom: 'var(--sp-4)' }}>
+          <h2 style={{ color: 'var(--color-warning)', margin: '0 0 var(--sp-2)' }}>🚨 Alert Broadcasted (Tier {currentTier})</h2>
           <p>Waiting for doctor or responder acknowledgement...</p>
-          <div className="spinner" style={{ width: '24px', height: '24px', borderWidth: '3px', margin: '12px auto 0' }}></div>
-        </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-1)', marginTop: 'var(--sp-2)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
+            <Clock size={16} />
+            <span>Next escalation in {Math.max(0, Math.floor(countdown))}s</span>
+          </div>
+          <div className="spinner" style={{ width: '24px', height: '24px', margin: 'var(--sp-2) auto 0' }}></div>
+        </Card>
       )}
 
-      <div className="card" style={{ marginBottom: '16px' }}>
-        <h3>Alerted Responders ({broadcasts.length})</h3>
-        {broadcasts.length === 0 && <p style={{ color: 'var(--text-muted)' }}>No responders alerted yet.</p>}
+      <Card title="Broadcast Progress" style={{ marginBottom: 'var(--sp-4)' }}>
+        <StatusStepper steps={stepperSteps} currentStep={acceptedStep} />
+      </Card>
+
+      <Card title="Alerted Responders" style={{ marginBottom: 'var(--sp-4)' }}>
+        {broadcasts.length === 0 && <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>No responders alerted yet.</p>}
         {broadcasts.map((b) => (
-          <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+          <div
+            key={b.id}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: 'var(--sp-2) 0',
+              borderBottom: '1px solid var(--color-border)',
+            }}
+          >
             <div>
-              <strong>{b.responders?.display_name || 'Responder'}</strong>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{b.responders?.specialty || 'General'} (Tier {b.tier})</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)' }}>
+                <strong>{b.responders?.display_name || 'Responder'}</strong>
+                <Badge variant={b.status === 'acknowledged' ? 'ack' : b.status === 'sent' ? 'sent' : 'declined'}>
+                  {b.status}
+                </Badge>
+              </div>
+              <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+                {b.responders?.specialty || 'General'} (Tier {b.tier})
+              </div>
             </div>
-            <div>
-              <span style={{
-                padding: '4px 8px',
-                borderRadius: '6px',
-                fontSize: '12px',
-                fontWeight: 600,
-                background: b.status === 'acknowledged' ? '#dcfce8' : b.status === 'sent' ? '#fef3c7' : '#fee2e2',
-                color: b.status === 'acknowledged' ? '#166534' : b.status === 'sent' ? '#92400e' : '#991b1b'
-              }}>
-                {b.status.toUpperCase()}
-              </span>
-            </div>
+            {b.eta_minutes && (
+              <Badge variant="ack">{b.eta_minutes} min ETA</Badge>
+            )}
           </div>
         ))}
-      </div>
+      </Card>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <button className="btn btn-primary" onClick={onStartProtocol}>
-          START FIRST-AID PROTOCOL GUIDANCE
-        </button>
-
-        <button className="btn btn-outline" onClick={handleFalseAlarm} style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-2)' }}>
+        <Button variant="primary" onClick={onStartProtocol}>
+          🏥 START FIRST-AID PROTOCOL GUIDANCE
+        </Button>
+        <Button variant="ghost" onClick={handleFalseAlarm}>
           This was a False Alarm
-        </button>
-
-        <button className="btn btn-outline" onClick={onReset}>
+        </Button>
+        <Button variant="ghost" onClick={onReset}>
           Back to Home
-        </button>
+        </Button>
       </div>
     </div>
   )
