@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { speak, speakStop, SpeechRecognizer } from '../lib/speech'
 import { supabase } from '../lib/supabase'
 
@@ -9,9 +9,12 @@ export default function ProtocolRunner({ treeId, incidentId, user, onFinish, onC
   const [error, setError] = useState(null)
   const [listening, setListening] = useState(false)
   const [history, setHistory] = useState([])
+  const [_sessionId, setSessionId] = useState(null)
+
+  const sessionIdRef = useRef(null)
 
   useEffect(() => {
-    async function loadTree() {
+    async function loadTreeAndCreateSession() {
       try {
         const res = await fetch(`/protocols/${treeId}.json`)
         if (!res.ok) throw new Error(`Failed to load protocol ${treeId}`)
@@ -19,33 +22,56 @@ export default function ProtocolRunner({ treeId, incidentId, user, onFinish, onC
         setTree(data)
         setCurrentNodeId(data.start)
         speak(`Starting first aid protocol: ${data.title}`)
+
+        // Create protocol_sessions row once
+        if (user && supabase) {
+          const { data: sess, error: sessErr } = await supabase
+            .from('protocol_sessions')
+            .insert({
+              incident_id: incidentId || null,
+              user_id: user.id,
+              tree_id: treeId,
+              steps: { current: data.start, history: [] },
+              started_at: new Date().toISOString()
+            })
+            .select('id')
+            .single()
+
+          if (!sessErr && sess) {
+            setSessionId(sess.id)
+            sessionIdRef.current = sess.id
+          }
+        }
       } catch (err) {
         setError(err.message)
       } finally {
         setLoading(false)
       }
     }
-    loadTree()
+    loadTreeAndCreateSession()
     return () => {
       speakStop()
     }
-  }, [treeId])
+  }, [treeId, incidentId, user])
+
+  // Update session by id as steps change
+  useEffect(() => {
+    if (tree && currentNodeId && sessionIdRef.current && supabase) {
+      supabase.from('protocol_sessions')
+        .update({
+          steps: { current: currentNodeId, history }
+        })
+        .eq('id', sessionIdRef.current)
+        .then(() => {})
+        .catch(() => {})
+    }
+  }, [currentNodeId, history, tree])
 
   useEffect(() => {
     if (tree && currentNodeId) {
       const node = tree.nodes[currentNodeId]
       if (node && node.text) {
         speak(node.text)
-      }
-      // Save session progress if incidentId and user are present
-      if (incidentId && user && supabase) {
-        supabase.from('protocol_sessions').upsert({
-          incident_id: incidentId,
-          user_id: user.id,
-          tree_id: treeId,
-          steps: { current: currentNodeId, history },
-          started_at: new Date().toISOString()
-        }).then(() => {}).catch(() => {})
       }
     }
   }, [currentNodeId, tree])
@@ -81,12 +107,15 @@ export default function ProtocolRunner({ treeId, incidentId, user, onFinish, onC
         (transcript) => {
           setListening(false)
           const lower = transcript.toLowerCase()
-          if (lower.includes('yes') || lower.includes('yeah') || lower.includes('yep')) {
+          const yesRegex = /\b(yes|yeah|yep)\b/i
+          const noRegex = /\b(no|nope)\b/i
+
+          if (yesRegex.test(lower)) {
             handleAnswer(true)
-          } else if (lower.includes('no') || lower.includes('nope') || lower.includes('not')) {
+          } else if (noRegex.test(lower)) {
             handleAnswer(false)
           } else {
-            alert(`Did not catch yes/no in: "${transcript}". Please tap buttons.`)
+            alert(`Could not recognize yes/no in: "${transcript}". Please tap buttons.`)
           }
         },
         () => setListening(false),
@@ -120,7 +149,6 @@ export default function ProtocolRunner({ treeId, incidentId, user, onFinish, onC
           {node.text}
         </p>
 
-        {/* Disclaimer per requirement */}
         <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '20px', borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
           This is first-aid guidance, not a diagnosis. Call your local emergency number.
         </p>

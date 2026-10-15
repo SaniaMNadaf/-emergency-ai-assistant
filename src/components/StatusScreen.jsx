@@ -2,19 +2,17 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { escalateBroadcasts, ESCALATION_INTERVAL_MS } from '../lib/broadcast'
 
-export default function StatusScreen({ incident, broadcasts: initialBroadcasts, onStartProtocol, onReset }) {
+export default function StatusScreen({ incident, broadcasts: initialBroadcasts, initialTier = 1, onStartProtocol, onReset }) {
   const [broadcasts, setBroadcasts] = useState(initialBroadcasts || [])
   const [acknowledgedResponder, setAcknowledgedResponder] = useState(null)
   const [eta, setEta] = useState(null)
-  const [currentTier, setCurrentTier] = useState(1)
-  const [escalated, setEscalated] = useState(false)
+  const [currentTier, setCurrentTier] = useState(initialTier)
   const [falseAlarm, setFalseAlarm] = useState(false)
 
   // Realtime subscription on broadcasts for this incident
   useEffect(() => {
     if (!supabase || !incident) return
 
-    // Fetch initial broadcasts state
     supabase
       .from('broadcasts')
       .select('*, responders(display_name, specialty, kind, tier)')
@@ -35,8 +33,7 @@ export default function StatusScreen({ incident, broadcasts: initialBroadcasts, 
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'broadcasts', filter: `incident_id=eq.${incident.id}` },
-        async (payload) => {
-          // Refresh broadcasts
+        async () => {
           const { data } = await supabase
             .from('broadcasts')
             .select('*, responders(display_name, specialty, kind, tier)')
@@ -58,24 +55,24 @@ export default function StatusScreen({ incident, broadcasts: initialBroadcasts, 
     }
   }, [incident])
 
-  // Tier escalation timer (15 seconds)
+  // Tier escalation timer (15 seconds per tier, stopping as soon as acknowledged)
   useEffect(() => {
-    if (acknowledgedResponder || escalated || falseAlarm) return
+    if (acknowledgedResponder || falseAlarm || currentTier >= 3) return
 
     const timer = setTimeout(async () => {
-      // Check if any acknowledged
       const hasAck = broadcasts.some(b => b.status === 'acknowledged')
       if (!hasAck) {
-        const success = await escalateBroadcasts(incident.id, currentTier)
+        const { success, nextTier } = await escalateBroadcasts(incident.id, currentTier)
         if (success) {
-          setCurrentTier(prev => prev + 1)
-          setEscalated(true)
+          setCurrentTier(nextTier)
+        } else if (currentTier < 3) {
+          setCurrentTier(prev => Math.min(3, prev + 1))
         }
       }
     }, ESCALATION_INTERVAL_MS)
 
     return () => clearTimeout(timer)
-  }, [broadcasts, acknowledgedResponder, currentTier, escalated, incident, falseAlarm])
+  }, [broadcasts, acknowledgedResponder, currentTier, falseAlarm, incident])
 
   const handleFalseAlarm = async () => {
     if (!supabase) return
@@ -107,7 +104,7 @@ export default function StatusScreen({ incident, broadcasts: initialBroadcasts, 
 
       <div className="card" style={{ marginBottom: '16px' }}>
         <h3>Alerted Responders ({broadcasts.length})</h3>
-        {broadcasts.length === 0 && <p style={{ color: 'var(--text-muted)' }}>No responders alerted yet (or corroboration rule pending).</p>}
+        {broadcasts.length === 0 && <p style={{ color: 'var(--text-muted)' }}>No responders alerted yet.</p>}
         {broadcasts.map((b) => (
           <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
             <div>

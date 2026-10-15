@@ -18,7 +18,6 @@ export default function AlertScreen({ broadcast, onResponded }) {
 
       if (inc) {
         setIncident(inc)
-        // Call RPC incident_details to get lat/lng numbers
         const { data: details } = await supabase.rpc('incident_details', { p_incident_id: inc.id })
         if (details && details.length > 0) {
           setIncidentDetails(details[0])
@@ -41,7 +40,6 @@ export default function AlertScreen({ broadcast, onResponded }) {
       })
       .eq('id', broadcast.id)
 
-    // Also update incident status if open
     if (!error && incident) {
       await supabase
         .from('incidents')
@@ -67,9 +65,10 @@ export default function AlertScreen({ broadcast, onResponded }) {
 
   if (loading) return <div className="card text-center">Loading incoming emergency alert...</div>
 
-  const lat = incidentDetails?.lat || 37.7749
-  const lng = incidentDetails?.lng || -122.4194
-  const mapUrl = `https://www.google.com/maps?q=${lat},${lng}`
+  const lat = incidentDetails?.lat
+  const lng = incidentDetails?.lng
+  const hasLocation = lat !== null && lat !== undefined && lng !== null && lng !== undefined
+  const mapUrl = hasLocation ? `https://www.google.com/maps?q=${lat},${lng}` : null
 
   return (
     <div style={{ maxWidth: '480px', margin: '0 auto', padding: '16px' }}>
@@ -81,17 +80,19 @@ export default function AlertScreen({ broadcast, onResponded }) {
       <div className="card" style={{ marginBottom: '16px' }}>
         <h3>Incident Details</h3>
         <p><strong>Reported:</strong> {new Date(incident?.created_at || Date.now()).toLocaleTimeString()}</p>
-        <p><strong>Location:</strong> {lat.toFixed(4)}, {lng.toFixed(4)}</p>
-        <div style={{ marginTop: '12px' }}>
-          <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline" style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>
-            🗺️ Open Location in Google Maps
-          </a>
-        </div>
+        <p><strong>Location:</strong> {hasLocation ? `${lat.toFixed(4)}, ${lng.toFixed(4)}` : <span style={{ color: 'var(--danger)' }}>Location unavailable</span>}</p>
+        
+        {hasLocation && (
+          <div style={{ marginTop: '12px' }}>
+            <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline" style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>
+              🗺️ Open Location in Google Maps
+            </a>
+          </div>
+        )}
 
         {incident?.has_photo && incident?.photo_path && (
           <div style={{ marginTop: '16px' }}>
             <p><strong>Attached Photo:</strong></p>
-            {/* Display photo from signed URL */}
             <PhotoDisplay supabase={supabase} photoPath={incident.photo_path} />
           </div>
         )}

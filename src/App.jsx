@@ -21,6 +21,7 @@ export default function App() {
   const [bystanderView, setBystanderView] = useState('home') // home | report | status | protocol
   const [activeIncident, setActiveIncident] = useState(null)
   const [activeBroadcasts, setActiveBroadcasts] = useState([])
+  const [initialTier, setInitialTier] = useState(1)
   const [activeProtocolId, setActiveProtocolId] = useState(null)
 
   const [doctorView, setDoctorView] = useState('home') // home | alert
@@ -69,9 +70,10 @@ export default function App() {
             {bystanderView === 'report' && (
               <ReportScreen
                 user={user}
-                onReportSubmitted={({ incident, broadcasts }) => {
+                onReportSubmitted={({ incident, broadcasts, initialTier: tier }) => {
                   setActiveIncident(incident)
                   setActiveBroadcasts(broadcasts)
+                  setInitialTier(tier || 1)
                   setBystanderView('status')
                 }}
                 onCancel={() => setBystanderView('home')}
@@ -81,7 +83,7 @@ export default function App() {
               <StatusScreen
                 incident={activeIncident}
                 broadcasts={activeBroadcasts}
-                user={user}
+                initialTier={initialTier}
                 onStartProtocol={() => {
                   setActiveProtocolId('cpr')
                   setBystanderView('protocol')
@@ -121,7 +123,6 @@ export default function App() {
             {doctorView === 'alert' && (
               <AlertScreen
                 broadcast={incomingBroadcast}
-                responder={null}
                 onResponded={() => setDoctorView('home')}
               />
             )}

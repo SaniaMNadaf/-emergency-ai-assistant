@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
 export default function DoctorHome({ user, onOpenAlert, onOpenDemoPanel, onLogout }) {
@@ -7,10 +7,14 @@ export default function DoctorHome({ user, onOpenAlert, onOpenDemoPanel, onLogou
   const [pastResponses, setPastResponses] = useState([])
   const [stats, setStats] = useState({ count: 0, avgSeconds: 0 })
 
+  const onOpenAlertRef = useRef(onOpenAlert)
+  useEffect(() => {
+    onOpenAlertRef.current = onOpenAlert
+  }, [onOpenAlert])
+
   useEffect(() => {
     async function loadDoctorData() {
       if (!supabase) return
-      // Get responder record for user
       const { data: resp } = await supabase
         .from('responders')
         .select('*')
@@ -19,7 +23,6 @@ export default function DoctorHome({ user, onOpenAlert, onOpenDemoPanel, onLogou
 
       if (resp) {
         setResponder(resp)
-        // Load past broadcasts for this responder
         const { data: broadcasts } = await supabase
           .from('broadcasts')
           .select('*, incidents(created_at, has_photo)')
@@ -45,7 +48,7 @@ export default function DoctorHome({ user, onOpenAlert, onOpenDemoPanel, onLogou
     loadDoctorData()
   }, [user])
 
-  // Realtime subscription for incoming broadcasts addressed to this responder
+  // Realtime subscription using useRef so it doesn't re-subscribe on every render
   useEffect(() => {
     if (!supabase || !responder) return
 
@@ -56,7 +59,7 @@ export default function DoctorHome({ user, onOpenAlert, onOpenDemoPanel, onLogou
         { event: 'INSERT', schema: 'public', table: 'broadcasts', filter: `responder_id=eq.${responder.id}` },
         (payload) => {
           if (payload.new && payload.new.status === 'sent') {
-            onOpenAlert(payload.new)
+            onOpenAlertRef.current?.(payload.new)
           }
         }
       )
@@ -65,7 +68,7 @@ export default function DoctorHome({ user, onOpenAlert, onOpenDemoPanel, onLogou
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [responder, onOpenAlert])
+  }, [responder])
 
   const toggleAvailability = async () => {
     if (!supabase || !responder) return
@@ -99,7 +102,6 @@ export default function DoctorHome({ user, onOpenAlert, onOpenDemoPanel, onLogou
         </div>
       </div>
 
-      {/* Availability Toggle */}
       <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <div>
           <h3>Availability Status</h3>
@@ -116,7 +118,6 @@ export default function DoctorHome({ user, onOpenAlert, onOpenDemoPanel, onLogou
         </button>
       </div>
 
-      {/* Participation Score (Responses count + average response time ONLY) */}
       <div className="card" style={{ marginBottom: '16px' }}>
         <h3>Participation Score</h3>
         <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
@@ -131,7 +132,6 @@ export default function DoctorHome({ user, onOpenAlert, onOpenDemoPanel, onLogou
         </div>
       </div>
 
-      {/* Past Responses list */}
       <div className="card">
         <h3>Past Responses</h3>
         {pastResponses.length === 0 && <p style={{ color: 'var(--text-muted)' }}>No responses recorded yet.</p>}

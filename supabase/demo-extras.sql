@@ -5,6 +5,7 @@
 -- ============================================================
 
 -- 1. Family can read incidents reported by patients they are linked to
+DROP POLICY IF EXISTS "Family reads patient incidents" ON public.incidents;
 CREATE POLICY "Family reads patient incidents"
 ON public.incidents FOR SELECT
 USING (
@@ -31,6 +32,7 @@ AS $$
 $$;
 
 -- 3. Simulate a doctor accepting (SECURITY DEFINER skips RLS)
+--    Only acknowledges broadcasts whose responder has user_id IS NULL (simulated/mock responder)
 CREATE OR REPLACE FUNCTION public.demo_acknowledge(p_incident_id uuid, p_eta int)
 RETURNS TABLE(broadcast_id uuid, responder_name text)
 LANGUAGE plpgsql SECURITY DEFINER
@@ -43,8 +45,10 @@ BEGIN
   SELECT b.id, b.responder_id
     INTO v_bid, v_rid
   FROM public.broadcasts b
+  JOIN public.responders r ON r.id = b.responder_id
   WHERE b.incident_id = p_incident_id
     AND b.status = 'sent'
+    AND r.user_id IS NULL
   ORDER BY b.sent_at ASC
   LIMIT 1;
 
@@ -91,16 +95,17 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('incident-photos', 'incident-photos', false)
 ON CONFLICT (id) DO NOTHING;
 
+DROP POLICY IF EXISTS "Auth upload incident photos" ON storage.objects;
 CREATE POLICY "Auth upload incident photos"
 ON storage.objects FOR INSERT TO authenticated
 WITH CHECK (bucket_id = 'incident-photos');
 
+DROP POLICY IF EXISTS "Auth read incident photos" ON storage.objects;
 CREATE POLICY "Auth read incident photos"
 ON storage.objects FOR SELECT TO authenticated
 USING (bucket_id = 'incident-photos');
 
 -- 6. Link the demo doctor user to a responders row
---    (uses the first existing responder's location offset by 0.001°)
 DO $$
 DECLARE
   v_uid uuid;
@@ -120,7 +125,7 @@ BEGIN
   LIMIT 1;
 
   IF v_lng IS NULL THEN
-    v_lng := 73.8567;  -- fallback: Pune, India
+    v_lng := 73.8567;
     v_lat := 18.5204;
   END IF;
 

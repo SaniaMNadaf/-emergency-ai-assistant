@@ -12,7 +12,6 @@ export default function FamilyDashboard({ user, onOpenDemoPanel, onLogout }) {
     async function checkAccessAndLoad() {
       if (!supabase) return
 
-      // Find active care link for this family member
       const { data: linkData } = await supabase
         .from('care_links')
         .select('*, users!care_links_patient_id_fkey(*)')
@@ -25,7 +24,6 @@ export default function FamilyDashboard({ user, onOpenDemoPanel, onLogout }) {
         const pat = linkData.users
         setPatient(pat)
 
-        // Load readings
         const { data: rData } = await supabase
           .from('readings')
           .select('*')
@@ -34,7 +32,6 @@ export default function FamilyDashboard({ user, onOpenDemoPanel, onLogout }) {
           .limit(10)
         if (rData) setReadings(rData)
 
-        // Load incidents for patient
         const { data: iData } = await supabase
           .from('incidents')
           .select('*')
@@ -42,7 +39,6 @@ export default function FamilyDashboard({ user, onOpenDemoPanel, onLogout }) {
           .order('created_at', { ascending: false })
         if (iData) setIncidents(iData)
 
-        // Log access
         await supabase.from('access_log').insert({
           patient_id: pat.id,
           viewer_id: user.id,
@@ -57,7 +53,6 @@ export default function FamilyDashboard({ user, onOpenDemoPanel, onLogout }) {
     checkAccessAndLoad()
   }, [user])
 
-  // Realtime subscription for incident alerts from patient
   useEffect(() => {
     if (!supabase || !patient) return
     const channel = supabase
@@ -93,6 +88,7 @@ export default function FamilyDashboard({ user, onOpenDemoPanel, onLogout }) {
   }
 
   const latestMedication = readings.find(r => r.type === 'medication')
+  const isMedicationTaken = latestMedication && String(latestMedication.value) === '1'
 
   return (
     <div style={{ maxWidth: '480px', margin: '0 auto', padding: '16px' }}>
@@ -111,7 +107,6 @@ export default function FamilyDashboard({ user, onOpenDemoPanel, onLogout }) {
         </div>
       </div>
 
-      {/* Emergency Alerts from Patient */}
       {incidents.filter(i => i.status === 'open' || i.status === 'acknowledged').length > 0 && (
         <div className="card" style={{ background: '#fee2e2', borderColor: '#dc2626', marginBottom: '16px' }}>
           <h2 style={{ color: '#991b1b', margin: '0 0 8px' }}>🚨 ACTIVE EMERGENCY ALERT</h2>
@@ -119,15 +114,13 @@ export default function FamilyDashboard({ user, onOpenDemoPanel, onLogout }) {
         </div>
       )}
 
-      {/* Medication Status */}
       <div className="card" style={{ marginBottom: '16px' }}>
         <h3>Medication Status</h3>
         <p style={{ fontSize: '16px', fontWeight: 600 }}>
-          {latestMedication ? (latestMedication.value === 1 ? '✓ Taken' : '✕ Skipped') : 'No status recorded today'}
+          {latestMedication ? (isMedicationTaken ? '✓ Taken' : '✕ Skipped') : 'No status recorded today'}
         </p>
       </div>
 
-      {/* Latest Readings */}
       <div className="card">
         <h3>Latest Readings</h3>
         {readings.filter(r => r.type !== 'medication').length === 0 && <p style={{ color: 'var(--text-muted)' }}>No readings recorded yet.</p>}

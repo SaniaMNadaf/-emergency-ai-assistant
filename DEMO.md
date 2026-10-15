@@ -12,29 +12,29 @@
 
 ## 3-Minute Script
 
-### Minute 0:00 - 0:45 | Offline-First & Bystander Emergency
+### Minute 0:00 - 0:45 | Bystander Emergency & Broadcast Escalation
 - Log in as **Bystander**.
-- Point out the **Online/Offline banner** at the top. Toggle airplane mode to show offline operation.
 - Tap the huge red **EMERGENCY** button.
 - Capture GPS location and attach a photo (corroboration rule).
-- Tap **Confirm & Broadcast Emergency** → watch the status screen show alerted responders.
+- Tap **Confirm & Broadcast Emergency** → watch the status screen automatically escalate tiers every 15 seconds if unacknowledged.
 
 ### Minute 0:45 - 1:45 | Voice-Assisted First-Aid Protocol (Airplane Mode)
 - From the status screen or home, tap **CPR Protocol**.
+- Enable **Airplane Mode** on your device to demonstrate offline capability.
 - Demonstrate hands-free operation: listen to text-to-speech instructions read aloud.
 - Use voice recognition (**"Answer by Voice"**) saying "Yes" or "No", or tap big buttons.
-- Show that all steps work in airplane mode with no internet.
+- Show that all steps work in airplane mode with no internet. Disable airplane mode afterwards.
 
 ### Minute 1:45 - 2:30 | Doctor Response & Realtime Handshake
 - Switch to a second phone or tab logged in as **Doctor**.
-- Show the incoming emergency alert pop up in real time.
+- Show the incoming emergency alert pop up in real time via Supabase Realtime.
 - Tap **Accept (10 min)**.
 - Switch back to the Bystander phone — notice the status screen updates instantly showing Dr. Sarah Chen is 10 minutes away.
 
-### Minute 2:30 - 3:00 | Family Consent & Demo Panel
+### Minute 2:30 - 3:00 | Reset Demo, Family Consent & Dashboard
+- Open the **Demo Control Panel** and tap **Reset Demo Data**.
 - Log in as **Patient** → invite family member → view access logs.
 - Log in as **Family** → view patient readings and live emergency status.
-- Open the **Demo Control Panel** to show how judges can instantly trigger fake emergencies or reset demo data.
 
 ---
 
