@@ -12,28 +12,29 @@
 
 ## 3-Minute Script
 
-### Minute 0:00 - 0:45 | Bystander Emergency & Broadcast Escalation
+### Minute 0:00 - 0:45 | Bystander Emergency
 - Log in as **Bystander**.
 - Tap the huge red **EMERGENCY** button.
-- Capture GPS location and attach a photo (corroboration rule).
-- Tap **Confirm & Broadcast Emergency** → watch the status screen automatically escalate tiers every 15 seconds if unacknowledged.
+- Capture GPS location and attach a photo (corroboration rule for Tier 1 alerts).
+- Tap **Confirm & Broadcast Emergency** → watch StatusScreen show auto-escalating tiers every 15 seconds.
 
-### Minute 0:45 - 1:45 | Voice-Assisted First-Aid Protocol (Airplane Mode)
-- From the status screen or home, tap **CPR Protocol**.
-- Enable **Airplane Mode** on your device to demonstrate offline capability.
+### Minute 0:45 - 1:45 | Offline First-Aid Protocol (Airplane Mode)
+- From the status screen, tap **START FIRST-AID PROTOCOL GUIDANCE** and select CPR.
+- Put the device in **Airplane Mode**.
 - Demonstrate hands-free operation: listen to text-to-speech instructions read aloud.
-- Use voice recognition (**"Answer by Voice"**) saying "Yes" or "No", or tap big buttons.
-- Show that all steps work in airplane mode with no internet. Disable airplane mode afterwards.
+- Use voice recognition ("Answer by Voice") saying "Yes" or "No", or tap big buttons.
+- Show that all steps work in airplane mode with no internet (pre-cached protocol trees).
+- Disable airplane mode after finishing the protocol.
 
 ### Minute 1:45 - 2:30 | Doctor Response & Realtime Handshake
 - Switch to a second phone or tab logged in as **Doctor**.
 - Show the incoming emergency alert pop up in real time via Supabase Realtime.
 - Tap **Accept (10 min)**.
-- Switch back to the Bystander phone — notice the status screen updates instantly showing Dr. Sarah Chen is 10 minutes away.
+- Switch back to the Bystander phone — the status screen updates instantly showing Dr. Sarah Chen is 10 minutes away.
 
-### Minute 2:30 - 3:00 | Reset Demo, Family Consent & Dashboard
-- Open the **Demo Control Panel** and tap **Reset Demo Data**.
-- Log in as **Patient** → invite family member → view access logs.
+### Minute 2:30 - 3:00 | Reset & Family Consent
+- Open the **Demo Control Panel** and tap **Reset Demo Data** (clears all data).
+- Log in as **Patient** → invite family member (`family@demo.com`) → view access logs.
 - Log in as **Family** → view patient readings and live emergency status.
 
 ---

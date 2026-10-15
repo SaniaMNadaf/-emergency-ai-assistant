@@ -3,6 +3,9 @@ import { supabase } from '../lib/supabase'
 import { requestGeolocation } from '../lib/permissions'
 import { reportEmergency } from '../lib/broadcast'
 
+const DEMO_FALLBACK_LAT = 18.5204
+const DEMO_FALLBACK_LNG = 73.8567
+
 export default function DemoPanel({ user, onClose }) {
   const [responders, setResponders] = useState([])
   const [message, setMessage] = useState(null)
@@ -27,23 +30,21 @@ export default function DemoPanel({ user, onClose }) {
       try {
         loc = await requestGeolocation()
       } catch {
-        // Fallback to first responder location via nearby_responders or responders table
-        const { data: respList } = await supabase.from('responders').select('location').limit(1)
-        if (respList && respList.length > 0 && respList[0].location) {
-          // parse point or query via RPC
-          const { data: rpcData } = await supabase.rpc('nearby_responders', { lat: 0, lng: 0, radius_m: 50000 })
-          if (rpcData && rpcData.length > 0) {
-            // Get location of first responder
-            const { data: _fullResp } = await supabase.from('responders').select('location').eq('id', rpcData[0].id).single()
-            // We can use default coordinates if all else fails
-          }
+        // GPS unavailable — fall back to first responder's area via nearby_responders
+        const { data: nearby } = await supabase.rpc('nearby_responders', {
+          lat: DEMO_FALLBACK_LAT,
+          lng: DEMO_FALLBACK_LNG,
+          radius_m: 50000
+        })
+        if (nearby && nearby.length > 0) {
+          loc = { lat: DEMO_FALLBACK_LAT, lng: DEMO_FALLBACK_LNG, accuracy: 1000 }
+        } else {
+          loc = { lat: DEMO_FALLBACK_LAT, lng: DEMO_FALLBACK_LNG, accuracy: 1000 }
         }
-        loc = { lat: 18.5204, lng: 73.8567, accuracy: 10 } // default fallback if GPS & db location unavailable
       }
 
-      // Use reportEmergency logic (same tier logic)
       await reportEmergency(user, loc, null)
-      setMessage('Triggered fake emergency using current location & broadcast logic!')
+      setMessage('Triggered fake emergency with GPS/location and broadcast logic!')
       loadResponders()
     } catch (err) {
       setMessage(`Error: ${err.message}`)

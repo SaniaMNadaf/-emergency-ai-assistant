@@ -174,21 +174,14 @@ export async function escalateBroadcasts(incidentId, currentTier) {
     .eq('incident_id', incidentId)
     .eq('status', 'sent')
 
-  // 2. Get incident location & already broadcasted responders
-  const { data: incident } = await supabase
-    .from('incidents')
-    .select('location')
-    .eq('id', incidentId)
-    .single()
+  // 2. Get incident location via incident_details RPC
+  const { data: details } = await supabase.rpc('incident_details', { p_incident_id: incidentId })
 
-  let lat = 37.7749
-  let lng = -122.4194
-  if (incident?.location) {
-    const { data: details } = await supabase.rpc('incident_details', { p_incident_id: incidentId })
-    if (details && details.length > 0) {
-      lat = details[0].lat
-      lng = details[0].lng
-    }
+  let lat = 18.5204
+  let lng = 73.8567
+  if (details && details.length > 0 && details[0]?.lat !== null) {
+    lat = details[0].lat
+    lng = details[0].lng
   }
 
   const { data: existingBroadcasts } = await supabase
