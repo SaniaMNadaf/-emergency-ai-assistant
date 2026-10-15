@@ -4,23 +4,29 @@ Offline-first PWA for AI-powered emergency triage in rural clinics, with Neo4j g
 
 ## Quick Start (Dev)
 
-```bash
-# Terminal 1 — API server (Neo4j agents, LLM calls, all server-side)
-npm run dev:api
-
-# Terminal 2 — Vite frontend (UI + PWA)
-npm run dev            # proxy passes /api to localhost:8787
-
-# OR — run both at once
-npm run dev:all
-```
-
-Or, alternatively:
+Install dependencies from the repository root:
 
 ```bash
 npm install
+```
+
+Start both services together:
+
+```bash
 npm run dev:all
 ```
+
+Or start them separately in two terminals:
+
+```bash
+# Terminal 1 — React/Vite frontend (http://localhost:5173)
+npm run dev
+
+# Terminal 2 — API backend (http://localhost:8787)
+npm run dev:api
+```
+
+The frontend proxies `/api` requests to the backend during local development.
 
 ## Tech Stack
 
@@ -62,17 +68,17 @@ GEMINI_API_KEY=your-gemini-key  # optional, enables AI agent features
 
 ## SQL Files (run in order)
 
-1. `supabase/schema.sql` (if not already created) — tables, RPC, extensions
-2. `supabase/demo-extras.sql` — demo functions, policies, storage bucket
+1. `backend/supabase/schema.sql` (if not already created) — tables, RPC, extensions
+2. `backend/supabase/demo-extras.sql` — demo functions, policies, storage bucket
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev:all` | Start Vite + API server together |
-| `npm run dev` | Start Vite only (API server must run separately) |
-| `npm run dev:api` | Start API server only |
-| `npm run build` | Production build |
+| `npm run dev:all` | Start frontend + backend together |
+| `npm run dev` | Start the frontend only |
+| `npm run dev:api` | Start the backend API only |
+| `npm run build` | Build the frontend for production |
 | `npm run lint` | Lint check |
 | `npm run validate:protocols` | Validate protocol JSON trees |
 | `npm run sync:graph` | Sync Supabase data to Neo4j |
@@ -98,16 +104,20 @@ See `DEMO.md` for the full rehearsal script.
 ## Architecture
 
 ```
-src/                    # React 19 frontend (PWA, offline-first)
-src/lib/                # Clients: supabase, speech, permissions
-src/components/         # State-based screens (no router)
-public/protocols/       # Offline first-aid decision trees (JSON)
-api/                    # Vercel serverless functions (Node.js)
-  _lib/neo4j.js         # Neo4j Aura HTTPS helper
-  _lib/llm.js           # Gemini REST helper (returns null if key missing)
-server/dev-api.mjs      # Local dev API server (port 8787)
-supabase/               # SQL files to run in Supabase SQL Editor
-scripts/                # Seed & sync scripts
+frontend/               # React 19 + Vite PWA
+  src/                  # UI, components, and browser-side clients
+  public/protocols/     # Offline first-aid decision trees (JSON)
+  vite.config.js        # Frontend build and local API proxy
+backend/                # API and server-side tools
+  api/                  # Vercel serverless functions (Node.js)
+    _lib/neo4j.js       # Neo4j Aura HTTPS helper
+    _lib/llm.js         # Gemini REST helper
+  server/dev-api.mjs    # Local API server (port 8787)
+  scripts/              # Protocol and graph scripts
+  supabase/             # SQL migrations, seeds, and extras
+  graph/                # Graph data model
+package.json            # Root commands for frontend and backend
+.env.local              # Shared local configuration (never committed)
 ```
 
 ### Safety Model

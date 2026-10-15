@@ -4,15 +4,15 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "dev:api": "node server/dev-api.mjs",
+    "dev": "vite --config frontend/vite.config.js frontend",
+    "dev:api": "node backend/server/dev-api.mjs",
     "dev:all": "concurrently \"npm run dev\" \"npm run dev:api\"",
-    "build": "vite build",
+    "build": "vite build --config frontend/vite.config.js frontend",
     "lint": "oxlint",
-    "preview": "vite preview",
-    "validate:protocols": "node scripts/validate-protocols.mjs",
-    "sync:graph": "node scripts/sync-graph.mjs",
-    "test:graph": "node scripts/test-graph.mjs"
+    "preview": "vite preview --config frontend/vite.config.js frontend",
+    "validate:protocols": "node backend/scripts/validate-protocols.mjs",
+    "sync:graph": "node backend/scripts/sync-graph.mjs",
+    "test:graph": "node backend/scripts/test-graph.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.57.0",

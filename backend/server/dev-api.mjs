@@ -1,10 +1,12 @@
 import http from 'http'
 import fs from 'fs'
 import path from 'path'
-import url from 'url'
+import url, { fileURLToPath } from 'url'
+
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 
 // Load .env.local (never committed)
-const envPath = path.resolve('.env.local')
+const envPath = path.join(projectRoot, '.env.local')
 if (fs.existsSync(envPath)) {
   const lines = fs.readFileSync(envPath, 'utf-8').split('\n')
   for (const line of lines) {
@@ -19,7 +21,7 @@ if (fs.existsSync(envPath)) {
   }
 }
 
-const apiDir = path.resolve('api')
+const apiDir = path.join(projectRoot, 'backend', 'api')
 const PORT = process.env.PORT || 8787
 
 const server = http.createServer(async (req, httpRes) => {

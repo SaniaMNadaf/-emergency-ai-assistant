@@ -5,5 +5,5 @@
     "react/rules-of-hooks": "error",
     "react/only-export-components": ["warn", { "allowConstantExport": true }]
   },
-  "ignorePatterns": ["api/**/*", "server/**/*"]
+  "ignorePatterns": ["backend/api/**/*", "backend/server/**/*"]
 }

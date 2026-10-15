@@ -7,7 +7,7 @@
 - `npm run dev:all` — Run both Vite dev server and API server concurrently
 
 ## API Routes
-API handlers live in `api/` and are served by the standalone dev server (`server/dev-api.mjs`, port 8787).
+API handlers live in `backend/api/` and are served by the standalone dev server (`backend/server/dev-api.mjs`, port 8787).
 - `/api/health` — Health check endpoint
 - `/api/match-responders` — Find nearby responders by incident type
 - `/api/incident-graph` — Fetch protocol tree by incident type from Neo4j

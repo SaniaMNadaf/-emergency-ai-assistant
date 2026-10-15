@@ -1,10 +1,13 @@
 import fs from 'fs'
 import path from 'path'
+import { fileURLToPath } from 'url'
 import { createClient } from '@supabase/supabase-js'
 import { runCypher } from '../api/_lib/neo4j.js'
 
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
+
 // --- Load .env.local ---
-const envPath = path.resolve('.env.local')
+const envPath = path.join(projectRoot, '.env.local')
 if (fs.existsSync(envPath)) {
   const lines = fs.readFileSync(envPath, 'utf-8').split('\n')
   for (const line of lines) {
@@ -60,7 +63,7 @@ async function main() {
   console.log(`✓ Fetched ${responders?.length || 0} responders from Supabase`)
 
   // 3. Load protocol trees
-  const protocolsDir = path.resolve('public/protocols')
+  const protocolsDir = path.join(projectRoot, 'frontend', 'public', 'protocols')
   const protocolFiles = fs.readdirSync(protocolsDir).filter(f => f.endsWith('.json'))
   const trees = []
   for (const f of protocolFiles) {

@@ -1,7 +1,9 @@
 import fs from 'fs'
 import path from 'path'
+import { fileURLToPath } from 'url'
 
-const protocolsDir = path.resolve('public/protocols')
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
+const protocolsDir = path.join(projectRoot, 'frontend', 'public', 'protocols')
 const files = ['cpr.json', 'bleeding.json', 'choking.json']
 
 let hasError = false

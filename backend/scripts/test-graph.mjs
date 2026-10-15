@@ -1,9 +1,12 @@
 import fs from 'fs'
 import path from 'path'
+import { fileURLToPath } from 'url'
 import { runCypher } from '../api/_lib/neo4j.js'
 
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
+
 // --- Load .env.local ---
-const envPath = path.resolve('.env.local')
+const envPath = path.join(projectRoot, '.env.local')
 if (fs.existsSync(envPath)) {
   const lines = fs.readFileSync(envPath, 'utf-8').split('\n')
   for (const line of lines) {
