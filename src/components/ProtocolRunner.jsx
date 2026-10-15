@@ -10,6 +10,8 @@ export default function ProtocolRunner({ treeId, incidentId, user, onFinish, onC
   const [listening, setListening] = useState(false)
   const [history, setHistory] = useState([])
   const [_sessionId, setSessionId] = useState(null)
+  const [guardStatus, setGuardStatus] = useState(null)
+  const [guardLoading, setGuardLoading] = useState(false)
 
   const sessionIdRef = useRef(null)
 
@@ -76,10 +78,40 @@ export default function ProtocolRunner({ treeId, incidentId, user, onFinish, onC
     }
   }, [currentNodeId, tree])
 
-  const handleAnswer = (answerYes) => {
+  const handleAnswer = async (answerYes) => {
     if (!tree || !currentNodeId) return
     const node = tree.nodes[currentNodeId]
     const nextId = answerYes ? node.yes : node.no
+
+    // Call protocol-guard API for safety check
+    setGuardLoading(true)
+    try {
+      const guardRes = await fetch('/api/protocol-guard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          treeId,
+          currentStepId: currentNodeId,
+          userAnswer: answerYes ? 'yes' : 'no',
+          history,
+        }),
+      })
+      const guardData = await guardRes.json()
+      setGuardStatus(guardData)
+
+      if (guardData.guard === 'block') {
+        // Block the action and warn the user
+        setGuardLoading(false)
+        if (!confirm('⚠️ The protocol guard flagged this answer as potentially unsafe. Proceed anyway?')) {
+          return
+        }
+      }
+    } catch {
+      setGuardStatus({ guard: 'ok', reason: 'Guard check failed — proceeding.' })
+    } finally {
+      setGuardLoading(false)
+    }
+
     if (nextId) {
       setHistory(prev => [...prev, { nodeId: currentNodeId, answer: answerYes ? 'yes' : 'no' }])
       setCurrentNodeId(nextId)
@@ -172,18 +204,24 @@ export default function ProtocolRunner({ treeId, incidentId, user, onFinish, onC
             </>
           )}
 
-          {!isQuestion && !isEnd && node.next && (
-            <button className="btn btn-primary" onClick={handleNext} style={{ flex: 2 }}>
-              NEXT STEP →
-            </button>
-          )}
+        {!isQuestion && !isEnd && node.next && (
+          <button className="btn btn-primary" onClick={handleNext} style={{ flex: 2 }}>
+            NEXT STEP →
+          </button>
+        )}
 
-          {isEnd && (
-            <button className="btn btn-primary" onClick={onFinish} style={{ flex: 2, background: 'var(--success)' }}>
-              FINISH PROTOCOL
-            </button>
-          )}
+        {isEnd && (
+          <button className="btn btn-primary" onClick={onFinish} style={{ flex: 2, background: 'var(--success)' }}>
+            FINISH PROTOCOL
+          </button>
+        )}
         </div>
+
+        {guardStatus && (
+          <div style={{ marginTop: '12px', padding: '8px 12px', borderRadius: '6px', fontSize: '13px', backgroundColor: guardStatus.guard === 'block' ? 'rgba(220, 38, 38, 0.1)' : guardStatus.guard === 'warning' ? 'rgba(245, 152, 27, 0.1)' : 'rgba(34, 197, 94, 0.1)', color: guardStatus.guard === 'block' ? '#dc2626' : guardStatus.guard === 'warning' ? '#f59e0b' : '#22c55e' }}>
+            {guardLoading ? '🛡️ Checking...' : `🛡️ Guard: ${guardStatus.guard}${guardStatus.reason ? ' — ' + guardStatus.reason.substring(0, 100) : ''}`}
+          </div>
+        )}
       </div>
     </div>
   )
