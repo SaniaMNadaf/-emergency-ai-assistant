@@ -28,10 +28,15 @@ export default function OfflineBanner() {
 
   if (!mounted) return null
 
+  // Remove the green online banner - only show when offline or when reports are syncing
+  if (online && pendingCount === 0) {
+    return null
+  }
+
   return (
     <div className={`banner ${online ? 'banner-online' : 'banner-offline'}`}>
       <span className="status-dot" style={{ background: online ? '#16a34a' : '#dc2626' }}></span>
-      {online ? 'Online' : 'Offline — app continues to work'}
+      {online ? 'Syncing reports...' : 'Offline — app continues to work'}
       {pendingCount > 0 && (
         <span style={{ fontSize: '12px', marginLeft: '8px' }}>
           ({pendingCount} pending {pendingCount === 1 ? 'report' : 'reports'} — will send when connection returns)

@@ -1,0 +1,7 @@
+{
+  "name": "Healthcare AI Emergency Assistant",
+  "description": "Offline-first AI emergency assistant for rural clinics and first responders with first-aid protocol runner, doctor alerts, and incident triage.",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

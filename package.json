@@ -4,9 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --config frontend/vite.config.js frontend",
-    "dev:api": "node backend/server/dev-api.mjs",
-    "dev:all": "concurrently \"npm run dev\" \"npm run dev:api\"",
+    "dev": "tsx server.ts",
+    "start": "tsx server.ts",
     "build": "vite build --config frontend/vite.config.js frontend",
     "lint": "oxlint",
     "preview": "vite preview --config frontend/vite.config.js frontend",
@@ -15,18 +14,23 @@
     "test:graph": "node backend/scripts/test-graph.mjs"
   },
   "dependencies": {
+    "express": "^5.3.0",
     "lucide-react": "^1.57.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.117.3",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/express": "^5.0.6",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
     "concurrently": "^10.0.6",
     "oxlint": "^1.81.0",
     "sharp": "^0.35.5",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
     "vite": "^8.3.0",
     "vite-plugin-pwa": "^2.0.0"
   }

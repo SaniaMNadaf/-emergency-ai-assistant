@@ -6,11 +6,13 @@ const AuthContext = createContext()
 const DEMO_PASSWORD = 'demo1234'
 
 const DEMO_ACCOUNTS = [
-  { id: 'bystander', email: 'bystander@demo.com', password: DEMO_PASSWORD, role: 'bystander', name: 'Emergency Bystander' },
-  { id: 'doctor-1', email: 'doctor@demo.com', password: DEMO_PASSWORD, role: 'doctor', name: 'Dr. Sarah Chen' },
-  { id: 'family-1', email: 'family@demo.com', password: DEMO_PASSWORD, role: 'family', name: 'Family Member' },
-  { id: 'patient-1', email: 'patient@demo.com', password: DEMO_PASSWORD, role: 'patient', name: 'Patient Demo' },
+  { id: 'bystander', email: 'bystander@pulserescue.org', password: DEMO_PASSWORD, role: 'bystander', name: 'Emergency Bystander' },
+  { id: 'doctor-1', email: 'doctor@pulserescue.org', password: DEMO_PASSWORD, role: 'doctor', name: 'Dr. Sarah Chen, MD' },
+  { id: 'police-1', email: 'police@pulserescue.org', password: DEMO_PASSWORD, role: 'police', name: 'Officer J. Miller / Dispatch 04' },
+  { id: 'family-1', email: 'family@pulserescue.org', password: DEMO_PASSWORD, role: 'family', name: 'David Vance (Family)' },
+  { id: 'patient-1', email: 'patient@pulserescue.org', password: DEMO_PASSWORD, role: 'patient', name: 'Eleanor Vance (Patient)' },
 ]
+
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
@@ -46,8 +48,9 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     if (!supabase) {
       const account = DEMO_ACCOUNTS.find(
-        (a) => a.email === email && a.password === password
+        (a) => (a.email.toLowerCase() === email.toLowerCase() || a.id === email.toLowerCase() || a.role === email.toLowerCase() || a.email.split('@')[0] === email.toLowerCase().split('@')[0]) && a.password === password
       )
+
       if (!account) throw new Error('Invalid credentials')
       const u = { id: account.id, email: account.email, role: account.role, name: account.name }
       localStorage.setItem('demo_user', JSON.stringify(u))

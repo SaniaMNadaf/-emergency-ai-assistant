@@ -12,6 +12,7 @@ import DoctorHome from './pages/medical/DoctorHome'
 import AlertScreen from './pages/medical/AlertScreen'
 import PatientHome from './pages/patient/PatientHome'
 import FamilyDashboard from './pages/family/FamilyDashboard'
+import PoliceDispatch from './pages/police/PoliceDispatch'
 import DemoPanel from './components/DemoPanel'
 
 export default function App() {
@@ -59,7 +60,7 @@ export default function App() {
 
       {showDemoPanel && <DemoPanel user={user} onClose={() => setShowDemoPanel(false)} />}
 
-      <main className="main-content">
+      <main className={user.role === 'police' || user.role === 'doctor' ? 'main-content-desktop' : 'main-content-mobile'}>
         {user.role === 'bystander' && (
           <>
             {bystanderView === 'home' && (
@@ -69,6 +70,12 @@ export default function App() {
                 onStartProtocol={(treeId) => {
                   setActiveProtocolId(treeId)
                   setBystanderView('protocol')
+                }}
+                onDirectEmergencyDispatched={({ incident, broadcasts, initialTier: tier }) => {
+                  setActiveIncident(incident)
+                  setActiveBroadcasts(broadcasts)
+                  setInitialTier(tier || 1)
+                  setBystanderView('status')
                 }}
                 onOpenDemoPanel={() => setShowDemoPanel(true)}
                 onLogout={logout}
@@ -134,6 +141,14 @@ export default function App() {
               />
             )}
           </>
+        )}
+
+        {user.role === 'police' && (
+          <PoliceDispatch
+            user={user}
+            onOpenDemoPanel={() => setShowDemoPanel(true)}
+            onLogout={logout}
+          />
         )}
 
         {user.role === 'patient' && (

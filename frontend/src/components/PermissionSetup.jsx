@@ -97,9 +97,19 @@ export default function PermissionSetup({ onReady }) {
       </p>
 
       {step === 'idle' && (
-        <button className="btn btn-danger" onClick={runAll}>
-          Test Permissions & Speak
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <button className="btn btn-danger" onClick={runAll}>
+            Test Permissions & Speak
+          </button>
+          <button
+            type="button"
+            className="btn btn-outline"
+            style={{ color: '#cbd5e1', borderColor: '#2e3d52' }}
+            onClick={handleContinue}
+          >
+            Skip for Now & Open Console →
+          </button>
+        </div>
       )}
 
       {step === 'location' && <div className="card">Requesting location...</div>}

@@ -19,7 +19,10 @@ export default async function handler(req, res) {
         Unknown: 'cpr',
       }
       const treeId = map[incidentType] || 'cpr'
-      const filePath = path.resolve(`public/protocols/${treeId}.json`)
+      let filePath = path.resolve(`frontend/public/protocols/${treeId}.json`)
+      if (!fs.existsSync(filePath)) {
+        filePath = path.resolve(`public/protocols/${treeId}.json`)
+      }
       const tree = JSON.parse(fs.readFileSync(filePath, 'utf-8'))
       return res.status(200).json({ treeId: tree.id, title: tree.title, nodes: tree.nodes, start: tree.start })
     }

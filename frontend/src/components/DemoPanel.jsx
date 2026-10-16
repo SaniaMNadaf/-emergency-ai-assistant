@@ -7,10 +7,23 @@ import { Badge } from './ui/Badge'
 import { Banner } from './ui/Banner'
 import { Smartphone, RefreshCw, Check, X, Trash2 } from 'lucide-react'
 
+import { useAuth } from '../lib/auth'
+
 export default function DemoPanel({ user, onClose }) {
+  const { login, DEMO_ACCOUNTS, DEMO_PASSWORD } = useAuth()
   const [responders, setResponders] = useState([])
   const [message, setMessage] = useState(null)
   const [loading, setLoading] = useState(false)
+
+  const switchRole = async (acct) => {
+    try {
+      await login(acct.email, DEMO_PASSWORD)
+      setMessage(`Switched to ${acct.role.toUpperCase()} role`)
+    } catch (err) {
+      setMessage(`Error switching: ${err.message}`)
+    }
+  }
+
 
   useEffect(() => {
     loadResponders()
@@ -126,6 +139,34 @@ export default function DemoPanel({ user, onClose }) {
       </div>
 
       {message && <Banner variant={message.includes('Error') ? 'error' : 'success'} style={{ marginBottom: 'var(--sp-4)' }}>{message}</Banner>}
+
+      <Card style={{ marginBottom: 'var(--sp-4)' }}>
+        <h3 style={{ marginTop: 0, marginBottom: 'var(--sp-2)', fontSize: '15px' }}>Switch Active View & Role</h3>
+        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '12px' }}>
+          Current Role: <strong style={{ color: '#ef4444', textTransform: 'uppercase' }}>{user?.role}</strong>
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
+          {DEMO_ACCOUNTS?.map((acct) => (
+            <button
+              key={acct.id}
+              onClick={() => switchRole(acct)}
+              style={{
+                backgroundColor: user?.role === acct.role ? '#ef4444' : '#18202d',
+                color: '#ffffff',
+                border: '1px solid #2e3d52',
+                borderRadius: '8px',
+                padding: '8px',
+                fontSize: '11px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                textTransform: 'capitalize',
+              }}
+            >
+              {acct.role === 'police' ? 'Police CAD' : acct.role}
+            </button>
+          ))}
+        </div>
+      </Card>
 
       <Card style={{ marginBottom: 'var(--sp-4)' }}>
         <h3 style={{ marginTop: 0, marginBottom: 'var(--sp-3)' }}>Emergency Simulation</h3>
