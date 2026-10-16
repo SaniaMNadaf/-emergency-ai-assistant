@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
-import { Button } from './ui/Button'
-import { Card } from './ui/Card'
-import { Badge } from './ui/Badge'
-import { Banner } from './ui/Banner'
+import { supabase } from '../../lib/supabase'
+import { Button } from '../../components/ui/Button'
+import { Card } from '../../components/ui/Card'
+import { Badge } from '../../components/ui/Badge'
+import { Banner } from '../../components/ui/Banner'
 import { Plus, Check, X, Trash2, Settings, LogOut } from 'lucide-react'
 
 export default function PatientHome({ user, onOpenDemoPanel, onLogout }) {

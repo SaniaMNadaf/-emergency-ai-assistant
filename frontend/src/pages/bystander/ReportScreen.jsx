@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
-import { requestGeolocation } from '../lib/permissions'
-import { reportEmergency } from '../lib/broadcast'
-import { Button } from './ui/Button'
-import { Card } from './ui/Card'
-import { Banner } from './ui/Banner'
-import { Badge } from './ui/Badge'
+import { requestGeolocation } from '../../lib/permissions'
+import { reportEmergency } from '../../lib/broadcast'
+import { Button } from '../../components/ui/Button'
+import { Card } from '../../components/ui/Card'
+import { Banner } from '../../components/ui/Banner'
+import { Badge } from '../../components/ui/Badge'
 import { Upload, MapPin, FileText } from 'lucide-react'
 
 const steps = [

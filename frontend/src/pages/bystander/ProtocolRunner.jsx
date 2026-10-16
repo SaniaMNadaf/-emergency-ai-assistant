@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
-import { speak, speakStop, SpeechRecognizer } from '../lib/speech'
-import { supabase } from '../lib/supabase'
-import { Button } from './ui/Button'
-import { Card } from './ui/Card'
-import { Banner } from './ui/Banner'
+import { speak, speakStop, SpeechRecognizer } from '../../lib/speech'
+import { supabase } from '../../lib/supabase'
+import { Button } from '../../components/ui/Button'
+import { Card } from '../../components/ui/Card'
+import { Banner } from '../../components/ui/Banner'
 import { Mic, MicOff, Volume2, Phone, Check, X } from 'lucide-react'
 
 export default function ProtocolRunner({ treeId, incidentId, user, onFinish, onCancel }) {

@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { useAuth } from '../lib/auth'
-import { isSupabaseConfigured } from '../lib/supabase'
-import { Button } from './ui/Button'
-import { Card } from './ui/Card'
-import { Badge } from './ui/Badge'
+import { useAuth } from '../../lib/auth'
+import { isSupabaseConfigured } from '../../lib/supabase'
+import { Button } from '../../components/ui/Button'
+import { Card } from '../../components/ui/Card'
+import { Badge } from '../../components/ui/Badge'
 
 const roleIcons = {
   bystander: '\uD83E\uDE80',

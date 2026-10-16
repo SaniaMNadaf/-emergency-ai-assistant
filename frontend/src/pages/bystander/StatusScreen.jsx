@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { supabase } from '../lib/supabase'
-import { escalateBroadcasts, ESCALATION_INTERVAL_MS } from '../lib/broadcast'
-import { Button } from './ui/Button'
-import { Card } from './ui/Card'
-import { Badge } from './ui/Badge'
-import { StatusStepper } from './ui/StatusStepper'
+import { supabase } from '../../lib/supabase'
+import { escalateBroadcasts, ESCALATION_INTERVAL_MS } from '../../lib/broadcast'
+import { Button } from '../../components/ui/Button'
+import { Card } from '../../components/ui/Card'
+import { Badge } from '../../components/ui/Badge'
+import { StatusStepper } from '../../components/ui/StatusStepper'
 import { Clock, MapPin, Phone } from 'lucide-react'
 
 const stepperSteps = [

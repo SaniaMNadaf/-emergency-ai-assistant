@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
-import { supabase } from '../lib/supabase'
-import { Button } from './ui/Button'
-import { Card } from './ui/Card'
-import { Badge } from './ui/Badge'
+import { supabase } from '../../lib/supabase'
+import { Button } from '../../components/ui/Button'
+import { Card } from '../../components/ui/Card'
+import { Badge } from '../../components/ui/Badge'
 import { LogOut, Settings, Bell, CheckCheck } from 'lucide-react'
 
 export default function DoctorHome({ user, onOpenAlert, onOpenDemoPanel, onLogout }) {

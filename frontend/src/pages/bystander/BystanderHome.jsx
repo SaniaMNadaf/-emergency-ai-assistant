@@ -1,6 +1,6 @@
-import { Button } from './ui/Button'
-import { Card } from './ui/Card'
-import { Badge } from './ui/Badge'
+import { Button } from '../../components/ui/Button'
+import { Card } from '../../components/ui/Card'
+import { Badge } from '../../components/ui/Badge'
 import { AlertCircle } from 'lucide-react'
 
 export default function BystanderHome({ user, onStartEmergency, onStartProtocol, onOpenDemoPanel, onLogout }) {
